@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using System.IO;
 using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
@@ -21,11 +22,12 @@ namespace AutoLauncher.AssetBundleTool
 			if (vPath.Contains(Application.dataPath + "/" + Setting.InputAssetsFolder) == false)
 				return false;
 
+			string vLangPath = GetLangPath(vPath);
 			string vZipPath = GetDataPath(vPath, Application.dataPath + "/" + Setting.InputAssetsFolder + "/");
 
 			for (int i = 0; i < Setting.ZipPathCount; i++)
 			{
-				if (vZipPath == Setting.ZipPathItems[i].value)
+				if (vZipPath == string.Format(Setting.ZipPathItems[i].value, vLangPath))
 					return true;
 			}
 
@@ -58,6 +60,18 @@ namespace AutoLauncher.AssetBundleTool
 				vDataPath = vDataPath + "/";
 			}
 			return vDataPath;
+		}
+
+		//取得語系路徑
+		public static string GetLangPath (string vPath)
+		{
+			string[] values = Enum.GetNames(typeof(eLanguage));
+			foreach (string value in values)
+			{
+				if (vPath.Contains(value + "/") == true)
+					return value;
+			}
+			return string.Empty;
 		}
 
 		private static void CreateCrcFile (string vPath, string vFileName, uint code)
