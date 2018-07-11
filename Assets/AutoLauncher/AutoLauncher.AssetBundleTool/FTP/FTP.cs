@@ -5,8 +5,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.IO;
+using Tools = AutoLauncher.Utility.Tools;
 
-namespace AutoLauncher
+namespace AutoLauncher.AssetBundleTool
 {
 	public static class FTP : object
 	{
@@ -26,7 +27,7 @@ namespace AutoLauncher
 		}
 
 		//檢查是否需要上傳
-		private static bool CheckNeedUpload (rResData vData, List<rResData> vList)
+		private static bool CheckNeedUpload (rRes vData, List<rRes> vList)
 		{
 			if (vList == null)
 				return true;
@@ -126,11 +127,11 @@ namespace AutoLauncher
 		}
 
 		//取得上傳列表
-		private static List<rResData> GetUploadList (eLanguage vLang)
+		private static List<rRes> GetUploadList (eLanguage vLang)
 		{
-			List<rResData> vList = new List<rResData>();
+			List<rRes> vList = new List<rRes>();
 			byte[] vData = null;
-			rResData[] vResData = null;
+			rRes[] vResData = null;
 			string vJson = string.Empty;
 
 			string vPath = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + GetLangPath(vLang, true) + "Versions/";
@@ -140,7 +141,7 @@ namespace AutoLauncher
 			if (vData != null)
 			{
 				vJson = System.Text.UTF8Encoding.UTF8.GetString(vData);
-				vResData = Tools.DeserializeObject<rResData[]>(vJson);
+				vResData = Tools.DeserializeObject<rRes[]>(vJson);
 
 				for (int i = 0; i < vResData.Length; i++)
 					vList.Add(vResData[i]);
@@ -150,11 +151,11 @@ namespace AutoLauncher
 		}
 
 		//取得下載列表
-		private static List<rResData> GetDownloadList (eLanguage vLang)
+		private static List<rRes> GetDownloadList (eLanguage vLang)
 		{
-			List<rResData> vList = new List<rResData>();
+			List<rRes> vList = new List<rRes>();
 			byte[] vData = null;
-			rResData[] vResData = null;
+			rRes[] vResData = null;
 			string vJson = string.Empty;
 
 			string vPath = Application.dataPath + "/" + Setting.DownloadAssetsFolder + "/" + GetLangPath(vLang, true) + "Versions/";
@@ -164,7 +165,7 @@ namespace AutoLauncher
 			if (vData != null)
 			{
 				vJson = System.Text.UTF8Encoding.UTF8.GetString(vData);
-				vResData = Tools.DeserializeObject<rResData[]>(vJson);
+				vResData = Tools.DeserializeObject<rRes[]>(vJson);
 
 				for (int i = 0; i < vResData.Length; i++)
 					vList.Add(vResData[i]);
@@ -336,8 +337,8 @@ namespace AutoLauncher
 			string zPWD = Setting.PWD;
 			string zIP = Setting.IP;
 
-			List<rResData> vList1 = GetUploadList(vLang);
-			List<rResData> vList2 = GetDownloadList(vLang);
+			List<rRes> vList1 = GetUploadList(vLang);
+			List<rRes> vList2 = GetDownloadList(vLang);
 
 			for (int i = 0; i < vList1.Count; i++)
 			{

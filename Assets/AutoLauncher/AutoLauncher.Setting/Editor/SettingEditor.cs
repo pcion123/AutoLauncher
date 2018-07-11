@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEditorInternal;
 using System.Collections;
 using System.IO;
+using AutoLauncher.AssetBundleTool;
 
 namespace AutoLauncher
 {
@@ -48,15 +49,10 @@ namespace AutoLauncher
 
 		private static string GetReplaceLangPath (string vPath)
 		{
-			string[] values = System.Enum.GetNames(typeof(eLanguage));
-			foreach (string value in values)
-			{
-				if (vPath.Contains(value + "/") == true)
-				{
-					return vPath.Replace(value + "/", "{0}/");
-				}
-			}
-			return vPath;
+			string[] strs = vPath.Split('/');
+			if (strs.Length >= 3)
+				strs[2] = "{0}";
+			return string.Join("/", strs, 0, strs.Length);
 		}
 
 		private void OnEnable ()

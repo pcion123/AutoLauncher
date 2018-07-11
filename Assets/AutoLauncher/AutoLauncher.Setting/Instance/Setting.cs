@@ -4,6 +4,8 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using AutoLauncher.AssetBundleTool;
+using Tools = AutoLauncher.Utility.Tools;
 
 namespace AutoLauncher
 {

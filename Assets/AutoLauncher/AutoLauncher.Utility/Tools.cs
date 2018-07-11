@@ -2,9 +2,9 @@
 using UnityEngine;
 using System.Collections;
 using System.IO;
-using Tools = AutoLauncher.Tools;
+//using Tools = AutoLauncher.Utility.Tools;
 
-namespace AutoLauncher
+namespace AutoLauncher.Utility
 {
 	public static class Tools : object
 	{
@@ -180,6 +180,12 @@ namespace AutoLauncher
 			}
 
 			return vData;
+		}
+
+		//Json反序列化
+		public static LitJson.JsonData DeserializeObject (string vJson)
+		{
+			return LitJson.JsonMapper.ToObject(vJson);
 		}
 
 		//Json反序列化

@@ -7,6 +7,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Security.Cryptography;
+using Tools = AutoLauncher.Utility.Tools;
 
 namespace AutoLauncher.AssetBundleTool
 {
@@ -90,7 +91,7 @@ namespace AutoLauncher.AssetBundleTool
 				return;
 			}
 
-			List<rResData> vContainer = new List<rResData>();
+			List<rRes> vContainer = new List<rRes>();
 
 			//檢查目錄是否存在
 			if (Directory.Exists(vPath) == true)
@@ -112,7 +113,7 @@ namespace AutoLauncher.AssetBundleTool
 						continue;
 					
 					string vFilePath = Path.GetDirectoryName(vFiles[i]).Replace("\\", "/");
-					rResData vData = new rResData();
+					rRes vData = new rRes();
 					vData.Version = Setting.Ver;
 					vData.FileName = vInfo.Name;
 					vData.Path = GetDataPath(vFilePath, Application.dataPath + "/" + Setting.OutputAssetsFolder + "/");
@@ -123,22 +124,11 @@ namespace AutoLauncher.AssetBundleTool
 			}
 
 			//整合資料
-			rResData[] vResData = vContainer.ToArray();
+			rRes[] vResData = vContainer.ToArray();
 			//轉成Json
 			string vJson = Tools.SerializeObject(vResData);
 			//寫入檔案
 			Tools.Save(vPath + "/" + "Versions" + "/", vName, System.Text.UTF8Encoding.UTF8.GetBytes(vJson));
-
-//			string vStr = string.Empty;
-//			for (int i = 0; i < vResData.Length; i++)
-//			{
-//				vStr = vStr + string.Format("Ver={0} FileName \"{1}\" Size={2} MD5 [{3}]\n", vResData[i].Version, vResData[i].FileName, vResData[i].FileSize, vResData[i].MD5Code);
-//			}
-//
-//			string xPath = Application.dataPath + "/" + "Log" + "/" + Setting.OutputAssetsFolder + "/" + vLang + "/" + "Versions" + "/";
-//
-//			//寫入檔案
-//			Tools.Save(xPath, vName.Replace(".res", ".txt"), System.Text.UTF8Encoding.UTF8.GetBytes(vStr));
 
 			if (vIsShow == true)
 				EditorUtility.DisplayDialog("VersionData", "Build " + vName + " complete!", "OK");
