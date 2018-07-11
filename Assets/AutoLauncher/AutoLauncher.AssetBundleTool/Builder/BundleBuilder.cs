@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System;
 using System.IO;
 using Object = UnityEngine.Object;
+using Tools = AutoLauncher.Utility.Tools;
 
 namespace AutoLauncher.AssetBundleTool
 {

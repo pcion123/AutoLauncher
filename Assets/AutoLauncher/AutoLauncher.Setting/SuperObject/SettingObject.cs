@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
+using AutoLauncher.AssetBundleTool;
 
 namespace AutoLauncher
 {

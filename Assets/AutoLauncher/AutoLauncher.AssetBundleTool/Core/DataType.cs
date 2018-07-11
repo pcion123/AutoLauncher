@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections;
 
-namespace AutoLauncher
+namespace AutoLauncher.AssetBundleTool
 {
 	//CRC結構
 	public struct rCRC
@@ -26,7 +26,8 @@ namespace AutoLauncher
 	}
 
 	//資源檔結構
-	public struct rResData
+	[System.Serializable]
+	public struct rRes
 	{
 		public string Version;  //版本號
 		public string FileName; //檔名

@@ -4,7 +4,7 @@ using System.Collections;
 using System;
 using Object = UnityEngine.Object;
 
-namespace AutoLauncher
+namespace AutoLauncher.AssetBundleTool
 {
 	public enum eLanguage
 	{

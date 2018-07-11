@@ -4,8 +4,9 @@ using UnityEditor;
 using System.Collections;
 using System.Net;
 using System.IO;
+using Tools = AutoLauncher.Utility.Tools;
 
-namespace AutoLauncher
+namespace AutoLauncher.AssetBundleTool
 {
 	public static class HTTP : object
 	{
@@ -59,21 +60,6 @@ namespace AutoLauncher
 					string zPath = Application.dataPath + "/" + Setting.DownloadAssetsFolder + "/" + vPath.Replace(vStr, "");
 
 					Tools.Save(zPath, vName, vXor);
-
-					string vJson = System.Text.UTF8Encoding.UTF8.GetString(vXor);
-					rResData[] vResData = Tools.DeserializeObject<rResData[]>(vJson);
-
-					string xStr = string.Empty;
-
-					for (int i = 0; i < vResData.Length; i++)
-					{
-						xStr = xStr + string.Format("Ver={0} FileName \"{1}\" Size={2} MD5 [{3}]\n", vResData[i].Version, vResData[i].FileName, vResData[i].FileSize, vResData[i].MD5Code);
-					}
-
-					string xPath = Application.dataPath + "/AutoLauncher/log/" + Setting.DownloadAssetsFolder + "/" + GetLangPath(vLang, true) + "Versions/";
-
-					//寫入檔案
-					Tools.Save(xPath, vName.Replace(".res", ".txt"), System.Text.UTF8Encoding.UTF8.GetBytes(xStr));
 				}
 				else
 				{
@@ -81,6 +67,56 @@ namespace AutoLauncher
 				}
 			}
 		}
+
+//		private static void Download (eLanguage vLang, string vPath, string vName)
+//		{
+//			using (WWW vBundle = new WWW(vPath + vName))
+//			{
+//				//檢查下載錯誤訊息
+//				if (vBundle.error != null)
+//				{
+//					throw new System.Exception(vBundle.error);
+//				}
+//
+//				while (vBundle.isDone == false)
+//				{
+//					if (vBundle.error != null)
+//					{
+//						throw new System.Exception(vBundle.error);
+//					}
+//				}
+//
+//				//檢查是否下載完成
+//				if (vBundle.isDone == true)
+//				{
+//					byte[] vXor = Tools.XOR(vBundle.bytes, Setting.EncryptionKeyValue);
+//
+//					string vStr = GetLocation(Setting.HTTP, Setting.User);
+//					string zPath = Application.dataPath + "/" + Setting.DownloadAssetsFolder + "/" + vPath.Replace(vStr, "");
+//
+//					Tools.Save(zPath, vName, vXor);
+//
+//					string vJson = System.Text.UTF8Encoding.UTF8.GetString(vXor);
+//					rRes[] vResData = Tools.DeserializeObject<rRes[]>(vJson);
+//
+//					string xStr = string.Empty;
+//
+//					for (int i = 0; i < vResData.Length; i++)
+//					{
+//						xStr = xStr + string.Format("Ver={0} FileName \"{1}\" Size={2} MD5 [{3}]\n", vResData[i].Version, vResData[i].FileName, vResData[i].FileSize, vResData[i].MD5Code);
+//					}
+//
+//					string xPath = Application.dataPath + "/AutoLauncher/log/" + Setting.DownloadAssetsFolder + "/" + GetLangPath(vLang, true) + "Versions/";
+//
+//					//寫入檔案
+//					Tools.Save(xPath, vName.Replace(".res", ".txt"), System.Text.UTF8Encoding.UTF8.GetBytes(xStr));
+//				}
+//				else
+//				{
+//					throw new System.Exception(vBundle.error);
+//				}
+//			}
+//		}
 
 		//處理上傳資料
 		public static void HandleDownloadVersion (eLanguage vLang, bool vIsShow = true)

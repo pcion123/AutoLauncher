@@ -8,6 +8,7 @@ using System.IO;
 using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.Checksums;
+using Tools = AutoLauncher.Utility.Tools;
 
 namespace AutoLauncher.AssetBundleTool
 {
