@@ -266,7 +266,7 @@ namespace AutoLauncher
 			{
 				if (string.IsNullOrEmpty(value) && obj != null)
 				{
-					itemData.FindPropertyRelative("value").stringValue = GetReplaceLangPath(AssetDatabase.GetAssetPath(obj).Replace("Assets/" + Setting.InputAssetsFolder + "/", "")) + "/";
+					itemData.FindPropertyRelative("value").stringValue = GetReplaceLangPath(AssetDatabase.GetAssetPath(obj)) + "/";
 					itemData.FindPropertyRelative("obj").objectReferenceValue = null;
 				}
 				rect.y += 2;
@@ -318,9 +318,7 @@ namespace AutoLauncher
 				{
 					if (!CheckIsFolder(AssetDatabase.GetAssetPath(obj)))
 					{
-						string[] paths = AssetDatabase.GetAssetPath(obj).Split('/');
-						string path = string.Join("/", paths, 3, paths.Length - 3);
-						itemData.FindPropertyRelative("value").stringValue = GetReplaceLangPath(AssetDatabase.GetAssetPath(obj));;
+						itemData.FindPropertyRelative("value").stringValue = GetReplaceLangPath(AssetDatabase.GetAssetPath(obj));
 						itemData.FindPropertyRelative("obj").objectReferenceValue = null;
 					}
 					else

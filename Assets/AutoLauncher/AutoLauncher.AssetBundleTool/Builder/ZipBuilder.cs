@@ -22,9 +22,9 @@ namespace AutoLauncher.AssetBundleTool
 
 			if (vPath.Contains(Application.dataPath + "/" + Setting.InputAssetsFolder) == false)
 				return false;
-
+			
 			string vLangPath = GetLangPath(vPath);
-			string vZipPath = GetDataPath(vPath, Application.dataPath + "/" + Setting.InputAssetsFolder + "/");
+			string vZipPath = string.Format("{0}/{1}", "Assets", GetDataPath(vPath, Application.dataPath + "/"));
 
 			for (int i = 0; i < Setting.ZipPathCount; i++)
 			{
