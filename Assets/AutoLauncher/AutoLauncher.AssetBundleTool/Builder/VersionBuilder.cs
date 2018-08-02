@@ -13,6 +13,20 @@ namespace AutoLauncher.AssetBundleTool
 {
 	public static class VersionBuilder : object
 	{
+		private static bool CheckFileExtension (FileInfo vInfo)
+		{
+			if (vInfo.Extension == ".res")
+				return false;
+
+			if (vInfo.Extension == ".meta")
+				return false;
+
+			if (vInfo.Extension == ".crc")
+				return false;
+
+			return true;
+		}
+
 		//取得資料路徑
 		private static string GetDataPath (string vPath, string vReplace)
 		{
@@ -71,47 +85,21 @@ namespace AutoLauncher.AssetBundleTool
 			return vCRC.CRC.ToString();
 		}
 
-		//處理ResData
-		public static void HandleVersion (string vLang, bool vIsShow = true) 
+		private static void BuildVersion (string vLang, string vPath, string vVersionName)
 		{
-			string vPath = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + vLang + "/";
-			string vName = "Version.res";
-
-			if (vPath == "")
-			{
-				if (vIsShow == true)
-					EditorUtility.DisplayDialog("VersionData", "Build VersionData Path Err!", "OK");
-				return;
-			}
-
-			if (vName == "")
-			{
-				if (vIsShow == true)
-					EditorUtility.DisplayDialog("VersionData", "Build VersionData Name Err!", "OK");
-				return;
-			}
-
-			List<rRes> vContainer = new List<rRes>();
-
 			//檢查目錄是否存在
 			if (Directory.Exists(vPath) == true)
 			{
+				List<rRes> vContainer = new List<rRes>();
 				//取得目錄底下的Data檔案
 				string[] vFiles = Directory.GetFiles(vPath, "*.*", SearchOption.AllDirectories);
 
 				for (int i = 0; i < vFiles.Length; i++)
 				{
 					FileInfo vInfo = new FileInfo(vFiles[i]);
-
-					if (vInfo.Extension == ".res")
+					if (!CheckFileExtension(vInfo))
 						continue;
 
-					if (vInfo.Extension == ".meta")
-						continue;
-
-					if (vInfo.Extension == ".crc")
-						continue;
-					
 					string vFilePath = Path.GetDirectoryName(vFiles[i]).Replace("\\", "/");
 					rRes vData = new rRes();
 					vData.Version = Setting.Ver;
@@ -121,20 +109,73 @@ namespace AutoLauncher.AssetBundleTool
 					vData.MD5Code = GetMd5File(vFilePath + "/", vInfo.Name);
 					vContainer.Add(vData);
 				}
+				//整合資料
+				rRes[] vResData = vContainer.ToArray();
+				//轉成Json
+				string vJson = Tools.SerializeObject(vResData);
+				//寫入檔案
+				Tools.Save(Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + vLang + "/" + "Versions" + "/", vVersionName, System.Text.UTF8Encoding.UTF8.GetBytes(vJson));
 			}
+		}
 
-			//整合資料
-			rRes[] vResData = vContainer.ToArray();
-			//轉成Json
-			string vJson = Tools.SerializeObject(vResData);
-			//寫入檔案
-			Tools.Save(vPath + "/" + "Versions" + "/", vName, System.Text.UTF8Encoding.UTF8.GetBytes(vJson));
+		//處理ResData
+		public static void HandleVersion (string vLang, bool vIsShow = true) 
+		{
+			if (Setting.VersionItems == null || Setting.VersionItems.Count == 0)
+			{
+				string vPath = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + vLang + "/";
+				string vName = "Main.res";
 
-			if (vIsShow == true)
-				EditorUtility.DisplayDialog("VersionData", "Build " + vName + " complete!", "OK");
+				if (vPath == "")
+				{
+					if (vIsShow == true)
+						EditorUtility.DisplayDialog("VersionData", "Build VersionData Path Err!", "OK");
+					return;
+				}
 
-			Debug.Log(vName + " build over!");
+				if (vName == "")
+				{
+					if (vIsShow == true)
+						EditorUtility.DisplayDialog("VersionData", "Build VersionData Name Err!", "OK");
+					return;
+				}
 
+				BuildVersion(vLang, vPath, vName);
+
+				if (vIsShow == true)
+					EditorUtility.DisplayDialog("VersionData", "Build " + vName + " complete!", "OK");
+				
+				Debug.Log(string.Format("{0} build over", vName));
+			}
+			else
+			{
+				for (int i = 0; i < Setting.VersionItems.Count; i++)
+				{
+					string[] vPaths = Setting.VersionItems[i].value.Split('/');
+					string vPath = Application.dataPath + "/" + string.Format(string.Join("/", vPaths, 1, vPaths.Length - 1), vLang);
+					string vName = Setting.VersionItems[i].ver;
+
+					if (vPath == "")
+					{
+						if (vIsShow == true)
+							EditorUtility.DisplayDialog("VersionData", "Build VersionData Path Err!", "OK");
+						return;
+					}
+
+					if (vName == "")
+					{
+						if (vIsShow == true)
+							EditorUtility.DisplayDialog("VersionData", "Build VersionData Name Err!", "OK");
+						return;
+					}
+
+					BuildVersion(vLang, vPath, vName);
+					Debug.Log(string.Format("{0} build over", vName));
+				}
+
+				if (vIsShow == true)
+					EditorUtility.DisplayDialog("VersionData", "Build all complete!", "OK");
+			}
 			AssetDatabase.Refresh();
 		}
 	}
