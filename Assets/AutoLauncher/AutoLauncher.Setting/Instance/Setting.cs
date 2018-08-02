@@ -433,6 +433,17 @@ namespace AutoLauncher
 			}
 		}
 
+		public static List<VersionValue> VersionItems
+		{
+			get
+			{
+				if (mInstance == null)
+					return null;
+				else
+					return mInstance.VersionItems;
+			}
+		}
+
 		public static List<AutoValue> AutoActionItems
 		{
 			get

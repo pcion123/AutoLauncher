@@ -28,6 +28,7 @@ namespace AutoLauncher
 		public List<DragValue> ZipPathItems = null;
 		public List<DragValue> ZipTypeItems = null;
 		public List<DragValue> DependenceWords = null;
+		public List<VersionValue> VersionItems = null;
 		public List<AutoValue> AutoActionItems = null;
 	}
 }

@@ -35,6 +35,7 @@ namespace AutoLauncher
 		ReorderableList mZipPathList;
 		ReorderableList mZipTypeList;
 		ReorderableList mDependenceWordList;
+		ReorderableList mVersionList;
 		ReorderableList mAutoActionList;
 
 		//檢查是否是資料夾
@@ -77,6 +78,10 @@ namespace AutoLauncher
 			mDependenceWordList.drawHeaderCallback = DrawDependenceWordHeader;
 			mDependenceWordList.drawElementCallback = DrawDependenceWordElement;
 
+			mVersionList = new ReorderableList(serializedObject, serializedObject.FindProperty("VersionItems"), true, true, true, true);
+			mVersionList.drawHeaderCallback = DrawVersionHeader;
+			mVersionList.drawElementCallback = DrawVersionElement;
+
 			mAutoActionList = new ReorderableList(serializedObject, serializedObject.FindProperty("AutoActionItems"), true, true, true, true);
 			mAutoActionList.drawHeaderCallback = DrawAutoActionHeader;
 			mAutoActionList.drawElementCallback = DrawAutoActionElement;
@@ -92,6 +97,7 @@ namespace AutoLauncher
 			mZipPathList.DoLayoutList();
 			mZipTypeList.DoLayoutList();
 			mDependenceWordList.DoLayoutList();
+			mVersionList.DoLayoutList();
 			mAutoActionList.DoLayoutList();
 			serializedObject.ApplyModifiedProperties();
 		}
@@ -194,6 +200,11 @@ namespace AutoLauncher
 		private void DrawDependenceWordHeader (Rect rect)
 		{
 			GUI.Label(rect, "DependenceWords");
+		}
+
+		private void DrawVersionHeader (Rect rect)
+		{
+			GUI.Label(rect, "Versions");
 		}
 
 		private void DrawAutoActionHeader (Rect rect)
@@ -329,6 +340,33 @@ namespace AutoLauncher
 				rect.y += 2;
 				rect.height = EditorGUIUtility.singleLineHeight;
 				EditorGUI.PropertyField(rect, itemData.FindPropertyRelative("value"), GUIContent.none);
+			}
+		}
+
+		private void DrawVersionElement (Rect rect, int index, bool selected, bool focused)
+		{
+			SerializedProperty itemData = mVersionList.serializedProperty.GetArrayElementAtIndex(index);
+			Object obj = itemData.FindPropertyRelative("obj").objectReferenceValue;
+			string value = itemData.FindPropertyRelative("value").stringValue;
+			string ver = itemData.FindPropertyRelative("ver").stringValue;
+			if (string.IsNullOrEmpty(value) && obj == null)
+			{
+				rect.y += 2;
+				rect.height = EditorGUIUtility.singleLineHeight;
+				EditorGUI.PropertyField(rect, itemData.FindPropertyRelative("obj"), GUIContent.none);
+			}
+			else
+			{
+				if (string.IsNullOrEmpty(value) && obj != null)
+				{
+					itemData.FindPropertyRelative("value").stringValue = GetReplaceLangPath(AssetDatabase.GetAssetPath(obj)) + "/";
+					itemData.FindPropertyRelative("ver").stringValue = "";
+					itemData.FindPropertyRelative("obj").objectReferenceValue = null;
+				}
+				rect.y += 2;
+				rect.height = EditorGUIUtility.singleLineHeight;
+				EditorGUI.PropertyField(new Rect(rect.x, rect.y, 210, EditorGUIUtility.singleLineHeight), itemData.FindPropertyRelative("value"), GUIContent.none);
+				EditorGUI.PropertyField(new Rect(rect.x + 215, rect.y, rect.width - 215, EditorGUIUtility.singleLineHeight), itemData.FindPropertyRelative("ver"), GUIContent.none);
 			}
 		}
 

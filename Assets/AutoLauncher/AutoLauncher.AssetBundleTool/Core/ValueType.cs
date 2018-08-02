@@ -14,6 +14,14 @@ namespace AutoLauncher.AssetBundleTool
 	}
 
 	[Serializable]
+	public class VersionValue
+	{
+		public Object obj = null;
+		public string value = string.Empty;
+		public string ver = string.Empty;
+	}
+
+	[Serializable]
 	public class AutoValue
 	{
 		public eBuildAcion acion = eBuildAcion.None;
