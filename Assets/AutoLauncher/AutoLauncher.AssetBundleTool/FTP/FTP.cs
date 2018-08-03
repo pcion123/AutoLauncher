@@ -133,18 +133,32 @@ namespace AutoLauncher.AssetBundleTool
 			byte[] vData = null;
 			rRes[] vResData = null;
 			string vJson = string.Empty;
-
 			string vPath = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + GetLangPath(vLang, true) + "Versions/";
 
-			vData = Tools.Load(vPath, "Version.res", Setting.EncryptionKeyValue);
-
-			if (vData != null)
+			if (Setting.VersionItems == null || Setting.VersionItems.Count == 0)
 			{
-				vJson = System.Text.UTF8Encoding.UTF8.GetString(vData);
-				vResData = Tools.DeserializeObject<rRes[]>(vJson);
-
-				for (int i = 0; i < vResData.Length; i++)
-					vList.Add(vResData[i]);
+				vData = Tools.Load(vPath, "Main.res", Setting.EncryptionKeyValue);
+				if (vData != null)
+				{
+					vJson = System.Text.UTF8Encoding.UTF8.GetString(vData);
+					vResData = Tools.DeserializeObject<rRes[]>(vJson);
+					for (int i = 0; i < vResData.Length; i++)
+						vList.Add(vResData[i]);
+				}
+			}
+			else
+			{
+				for (int i = 0; i < Setting.VersionItems.Count; i++)
+				{
+					vData = Tools.Load(vPath, Setting.VersionItems[i].ver, Setting.EncryptionKeyValue);
+					if (vData != null)
+					{
+						vJson = System.Text.UTF8Encoding.UTF8.GetString(vData);
+						vResData = Tools.DeserializeObject<rRes[]>(vJson);
+						for (int j = 0; j < vResData.Length; j++)
+							vList.Add(vResData[j]);
+					}
+				}
 			}
 
 			return vList;
@@ -157,18 +171,32 @@ namespace AutoLauncher.AssetBundleTool
 			byte[] vData = null;
 			rRes[] vResData = null;
 			string vJson = string.Empty;
-
 			string vPath = Application.dataPath + "/" + Setting.DownloadAssetsFolder + "/" + GetLangPath(vLang, true) + "Versions/";
 
-			vData = Tools.Load(vPath, "Version.res");
-
-			if (vData != null)
+			if (Setting.VersionItems == null || Setting.VersionItems.Count == 0)
 			{
-				vJson = System.Text.UTF8Encoding.UTF8.GetString(vData);
-				vResData = Tools.DeserializeObject<rRes[]>(vJson);
-
-				for (int i = 0; i < vResData.Length; i++)
-					vList.Add(vResData[i]);
+				vData = Tools.Load(vPath, "Main.res", Setting.EncryptionKeyValue);
+				if (vData != null)
+				{
+					vJson = System.Text.UTF8Encoding.UTF8.GetString(vData);
+					vResData = Tools.DeserializeObject<rRes[]>(vJson);
+					for (int i = 0; i < vResData.Length; i++)
+						vList.Add(vResData[i]);
+				}
+			}
+			else
+			{
+				for (int i = 0; i < Setting.VersionItems.Count; i++)
+				{
+					vData = Tools.Load(vPath, Setting.VersionItems[i].ver, Setting.EncryptionKeyValue);
+					if (vData != null)
+					{
+						vJson = System.Text.UTF8Encoding.UTF8.GetString(vData);
+						vResData = Tools.DeserializeObject<rRes[]>(vJson);
+						for (int j = 0; j < vResData.Length; j++)
+							vList.Add(vResData[j]);
+					}
+				}
 			}
 
 			return vList;
