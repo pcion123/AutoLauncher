@@ -135,11 +135,21 @@ namespace AutoLauncher.AssetBundleTool
 
 			try 
 			{
-				Download(vLang, vPath, "Version.res");
+				if (Setting.VersionItems == null || Setting.VersionItems.Count == 0)
+				{
+					Download(vLang, vPath, "Main.res");
+				}
+				else
+				{
+					for (int i = 0; i < Setting.VersionItems.Count; i++)
+					{
+						Download(vLang, vPath, Setting.VersionItems[i].ver);
+					}
+				}
 			}
 			catch (System.Exception e) 
 			{
-				Debug.LogWarning(e.Message + " " + "Version.res" + " Download Err!");
+				Debug.LogWarning(e.Message + " " + "Version" + " Download Err!");
 			}
 
 			if (vIsShow == true)
