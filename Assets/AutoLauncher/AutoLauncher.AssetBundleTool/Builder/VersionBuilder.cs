@@ -1,179 +1,171 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
-using System.Collections;
-using System.Collections.Generic;
-using System;
-using System.IO;
-using System.Text;
-using System.Security.Cryptography;
-using Tools = AutoLauncher.Utility.Tools;
-
 namespace AutoLauncher.AssetBundleTool
 {
+	using UnityEngine;
+	using UnityEditor;
+	using System.Collections;
+	using System.Collections.Generic;
+	using System;
+	using System.IO;
+	using System.Text;
+	using System.Security.Cryptography;
+	using Tools = AutoLauncher.Utility.Tools;
+
 	public static class VersionBuilder : object
 	{
-		private static bool CheckFileExtension (FileInfo vInfo)
+		private static bool CheckFileExtension(FileInfo info)
 		{
-			if (vInfo.Extension == ".res")
+			if (info.Extension == ".res")
 				return false;
 
-			if (vInfo.Extension == ".meta")
+			if (info.Extension == ".meta")
 				return false;
 
-			if (vInfo.Extension == ".crc")
+			if (info.Extension == ".crc")
 				return false;
 
 			return true;
 		}
 
 		//取得資料路徑
-		private static string GetDataPath (string vPath, string vReplace)
+		private static string GetDataPath(string path, string replace)
 		{
-			string vDataPath = vPath.Replace(vReplace, "");
-			string vFileName = Path.GetFileName(vPath);
-			string vExtension = Path.GetExtension(vPath);
-			if (vExtension != "")
+			string dataPath = path.Replace(replace, "");
+			string fileName = Path.GetFileName(path);
+			string extension = Path.GetExtension(path);
+			if (extension != "")
 			{
-				string vFolder = vFileName.Replace(vExtension, "") + "/";
-				vDataPath = vDataPath.Replace(vFolder + vFileName, "");
+				string folder = fileName.Replace(extension, "") + "/";
+				dataPath = dataPath.Replace(folder + fileName, "");
 			}
 			else
 			{
-				vDataPath = vDataPath + "/";
+				dataPath = dataPath + "/";
 			}
-			return vDataPath;
+			return dataPath;
 		}
 
 		//取得檔案的MD5編碼
-		private static string GetMd5File (string vPath, string vName)
+		private static string GetMd5File(string path, string name)
 		{
-			FileInfo vInfo = new FileInfo(vPath + vName);
-			if ((vInfo.Extension == ".unity3d") || (vInfo.Extension == ".zip"))
-				return GetMd5Unity(vPath, "." + vName);
+			FileInfo info = new FileInfo(path + name);
+			if ((info.Extension == ".unity3d") || (info.Extension == ".zip"))
+				return GetMd5Unity(path, "." + name);
 
-			byte[] vData = Tools.Load(vPath, vName);
-
+			byte[] data = Tools.Load(path, name);
 			MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
-
-			vData = md5.ComputeHash(vData);
-
+			data = md5.ComputeHash(data);
 			StringBuilder sb = new StringBuilder(32);
-
-			for (int i = 0; i < vData.Length; i++)
-				sb.Append(vData[i].ToString("x").PadLeft(2, '0'));
+			for (int i = 0; i < data.Length; i++)
+				sb.Append(data[i].ToString("x").PadLeft(2, '0'));
 
 			return sb.ToString();
 		}
 
 		//取得Bundle的MD5編號
-		private static string GetMd5Unity (string vPath, string vName)
+		private static string GetMd5Unity(string path, string name)
 		{
-			FileInfo vInfo = new FileInfo(vPath + vName);
+			FileInfo info = new FileInfo(path + name);
+			byte[] data = Tools.Load(path, name.Replace(info.Extension, ".crc"));
 
-			byte[] vData = Tools.Load(vPath, vName.Replace(vInfo.Extension, ".crc"));
-
-			if (vData == null)
+			if (data == null)
 				return string.Empty;
 
 			//取出Json字串
-			string vJson = System.Text.UTF8Encoding.UTF8.GetString(vData);
-
+			string json = System.Text.UTF8Encoding.UTF8.GetString(data);
 			//Json反序列化
-			rCRC vCRC = Tools.DeserializeObject<rCRC>(vJson);
-
-			return vCRC.CRC.ToString();
+			rCRC crc = Tools.DeserializeObject<rCRC>(json);
+			return crc.CRC.ToString();
 		}
 
-		private static void BuildVersion (string vLang, string vPath, string vVersionName)
+		private static void BuildVersion(string lang, string path, string versionName)
 		{
 			//檢查目錄是否存在
-			if (Directory.Exists(vPath) == true)
+			if (Directory.Exists(path) == true)
 			{
-				List<rRes> vContainer = new List<rRes>();
+				List<rRes> container = new List<rRes>();
 				//取得目錄底下的Data檔案
-				string[] vFiles = Directory.GetFiles(vPath, "*.*", SearchOption.AllDirectories);
-
-				for (int i = 0; i < vFiles.Length; i++)
+				string[] files = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories);
+				for (int i = 0; i < files.Length; i++)
 				{
-					FileInfo vInfo = new FileInfo(vFiles[i]);
-					if (!CheckFileExtension(vInfo))
+					FileInfo info = new FileInfo(files[i]);
+					if (!CheckFileExtension(info))
 						continue;
 
-					string vFilePath = Path.GetDirectoryName(vFiles[i]).Replace("\\", "/");
-					rRes vData = new rRes();
-					vData.Version = Setting.Ver;
-					vData.FileName = vInfo.Name;
-					vData.Path = GetDataPath(vFilePath, Application.dataPath + "/" + Setting.OutputAssetsFolder + "/");
-					vData.FileSize = vInfo.Length;
-					vData.MD5Code = GetMd5File(vFilePath + "/", vInfo.Name);
-					vContainer.Add(vData);
+					string filePath = Path.GetDirectoryName(files[i]).Replace("\\", "/");
+					rRes data = new rRes();
+					data.Version = Setting.Ver;
+					data.FileName = info.Name;
+					data.Path = GetDataPath(filePath, Application.dataPath + "/" + Setting.OutputAssetsFolder + "/");
+					data.FileSize = info.Length;
+					data.MD5Code = GetMd5File(filePath + "/", info.Name);
+					container.Add(data);
 				}
 				//整合資料
-				rRes[] vResData = vContainer.ToArray();
+				rRes[] resData = container.ToArray();
 				//轉成Json
-				string vJson = Tools.SerializeObject(vResData);
+				string json = Tools.SerializeObject(resData);
 				//寫入檔案
-				Tools.Save(Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + vLang + "/" + "Versions" + "/", vVersionName, System.Text.UTF8Encoding.UTF8.GetBytes(vJson));
+				Tools.Save(Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + lang + "/" + "Versions" + "/", versionName, System.Text.UTF8Encoding.UTF8.GetBytes(json));
 			}
 		}
 
 		//處理ResData
-		public static void HandleVersion (string vLang, bool vIsShow = true) 
+		public static void HandleVersion(string lang, bool isShow = true) 
 		{
 			if (Setting.VersionItems == null || Setting.VersionItems.Count == 0)
 			{
-				string vPath = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + vLang + "/";
-				string vName = "Main.res";
+				string path = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + lang + "/";
+				string name = "Main.res";
 
-				if (vPath == "")
+				if (path == "")
 				{
-					if (vIsShow == true)
+					if (isShow == true)
 						EditorUtility.DisplayDialog("VersionData", "Build VersionData Path Err!", "OK");
 					return;
 				}
 
-				if (vName == "")
+				if (name == "")
 				{
-					if (vIsShow == true)
+					if (isShow == true)
 						EditorUtility.DisplayDialog("VersionData", "Build VersionData Name Err!", "OK");
 					return;
 				}
 
-				BuildVersion(vLang, vPath, vName);
+				BuildVersion(lang, path, name);
 
-				if (vIsShow == true)
-					EditorUtility.DisplayDialog("VersionData", "Build " + vName + " complete!", "OK");
+				if (isShow == true)
+					EditorUtility.DisplayDialog("VersionData", "Build " + name + " complete!", "OK");
 				
-				Debug.Log(string.Format("{0} build over", vName));
+				Debug.Log(string.Format("{0} build over", name));
 			}
 			else
 			{
 				for (int i = 0; i < Setting.VersionItems.Count; i++)
 				{
-					string[] vPaths = Setting.VersionItems[i].value.Split('/');
-					string vPath = Application.dataPath + "/" + string.Format(string.Join("/", vPaths, 1, vPaths.Length - 1), vLang);
-					string vName = Setting.VersionItems[i].ver;
+					string[] paths = Setting.VersionItems[i].value.Split('/');
+					string path = Application.dataPath + "/" + string.Format(string.Join("/", paths, 1, paths.Length - 1), lang);
+					string name = Setting.VersionItems[i].ver;
 
-					if (vPath == "")
+					if (path == "")
 					{
-						if (vIsShow == true)
+						if (isShow == true)
 							EditorUtility.DisplayDialog("VersionData", "Build VersionData Path Err!", "OK");
 						return;
 					}
 
-					if (vName == "")
+					if (name == "")
 					{
-						if (vIsShow == true)
+						if (isShow == true)
 							EditorUtility.DisplayDialog("VersionData", "Build VersionData Name Err!", "OK");
 						return;
 					}
 
-					BuildVersion(vLang, vPath, vName);
-					Debug.Log(string.Format("{0} build over", vName));
+					BuildVersion(lang, path, name);
+					Debug.Log(string.Format("{0} build over", name));
 				}
 
-				if (vIsShow == true)
+				if (isShow == true)
 					EditorUtility.DisplayDialog("VersionData", "Build all complete!", "OK");
 			}
 			AssetDatabase.Refresh();

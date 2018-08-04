@@ -1,12 +1,13 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
-using System.Collections;
-using System.Collections.Generic;
-using AutoLauncher.AssetBundleTool;
-
 namespace AutoLauncher
 {
+	using UnityEngine;
+	using UnityEditor;
+	using System.Collections;
+	using System.Collections.Generic;
+	using AutoLauncher.AssetBundleTool;
+	using AutoLauncher.Enum;
+
 	public class SettingObject : ScriptableObject
 	{
 		public string User = "Server01";

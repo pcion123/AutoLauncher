@@ -1,15 +1,15 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
-using UnityEditor.Experimental.AssetImporters;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using Object = UnityEngine.Object;
-using Tools = AutoLauncher.Utility.Tools;
-
-namespace AutoLauncher
+namespace AutoLauncher.Importer
 {
+	using UnityEngine;
+	using UnityEditor;
+	using UnityEditor.Experimental.AssetImporters;
+	using System.Collections;
+	using System.Collections.Generic;
+	using System.IO;
+	using Object = UnityEngine.Object;
+	using Tools = AutoLauncher.Utility.Tools;
+
 	[System.Serializable]
 	public class StringStringDictionary : Utility.SerializableDictionary<string, string> {}
 
@@ -44,15 +44,15 @@ namespace AutoLauncher
 
 		public override void OnImportAsset(AssetImportContext ctx)
 		{
-			byte[] vData = Tools.Load(ctx.assetPath);
-			string vJson = System.Text.UTF8Encoding.UTF8.GetString(vData);
-			LitJson.JsonData vJsonData = Tools.DeserializeObject(vJson);
+			byte[] data = Tools.Load(ctx.assetPath);
+			string json = System.Text.UTF8Encoding.UTF8.GetString(data);
+			LitJson.JsonData jsonData = Tools.DeserializeObject(json);
 			mJsonList = new List<StringStringDictionary>();
-			for (int i = 0; i < vJsonData.Count; i++)
+			for (int i = 0; i < jsonData.Count; i++)
 			{
-				LitJson.JsonData tmp = vJsonData[i];
+				LitJson.JsonData tmp = jsonData[i];
 				StringStringDictionary dict = new StringStringDictionary();
-				IEnumerator ite = vJsonData[i].Keys.GetEnumerator();
+				IEnumerator ite = jsonData[i].Keys.GetEnumerator();
 				while (ite.MoveNext())
 				{
 					string key = ite.Current.ToString();
@@ -62,9 +62,9 @@ namespace AutoLauncher
 				mJsonList.Add(dict);
 			}
 
-			string vFileName = Path.GetFileNameWithoutExtension(ctx.assetPath);
+			string fileName = Path.GetFileNameWithoutExtension(ctx.assetPath);
 			Object asset = AssetDatabase.LoadAssetAtPath(ctx.assetPath, typeof(Object));
-			ctx.AddObjectToAsset(vFileName, asset);
+			ctx.AddObjectToAsset(fileName, asset);
 			ctx.SetMainObject(asset);
 		}
 	}

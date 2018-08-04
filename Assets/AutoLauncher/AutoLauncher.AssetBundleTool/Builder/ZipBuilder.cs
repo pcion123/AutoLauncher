@@ -1,34 +1,34 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
-using System.Collections;
-using System.Collections.Generic;
-using System;
-using System.IO;
-using ICSharpCode.SharpZipLib.Core;
-using ICSharpCode.SharpZipLib.Zip;
-using ICSharpCode.SharpZipLib.Checksums;
-using Tools = AutoLauncher.Utility.Tools;
-
 namespace AutoLauncher.AssetBundleTool
 {
+	using UnityEngine;
+	using UnityEditor;
+	using System.Collections;
+	using System.Collections.Generic;
+	using System;
+	using System.IO;
+	using ICSharpCode.SharpZipLib.Core;
+	using ICSharpCode.SharpZipLib.Zip;
+	using ICSharpCode.SharpZipLib.Checksums;
+	using Tools = AutoLauncher.Utility.Tools;
+
 	public static class ZipBuilder : object
 	{
 		//檢查包Zip路徑
-		private static bool CheckZipPath (string vPath)
+		private static bool CheckZipPath(string path)
 		{
-			if (vPath == string.Empty || vPath == null)
+			if (path == string.Empty || path == null)
 				return false;
 
-			if (vPath.Contains(Application.dataPath + "/" + Setting.InputAssetsFolder) == false)
+			if (path.Contains(Application.dataPath + "/" + Setting.InputAssetsFolder) == false)
 				return false;
 			
-			string vLangPath = GetLangPath(vPath);
-			string vZipPath = string.Format("{0}/{1}", "Assets", GetDataPath(vPath, Application.dataPath + "/"));
+			string langPath = GetLangPath(path);
+			string zipPath = string.Format("{0}/{1}", "Assets", GetDataPath(path, Application.dataPath + "/"));
 
 			for (int i = 0; i < Setting.ZipPathCount; i++)
 			{
-				if (vZipPath == string.Format(Setting.ZipPathItems[i].value, vLangPath))
+				if (zipPath == string.Format(Setting.ZipPathItems[i].value, langPath))
 					return true;
 			}
 
@@ -36,145 +36,145 @@ namespace AutoLauncher.AssetBundleTool
 		}
 
 		//檢查是否是資料夾
-		private static bool CheckIsFolder (string vPath)
+		private static bool CheckIsFolder(string path)
 		{
-			FileAttributes vAttr = File.GetAttributes(@vPath);
-			if ((vAttr & FileAttributes.Directory) == FileAttributes.Directory)
+			FileAttributes attr = File.GetAttributes(@path);
+			if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
 				return true;
 			else
 				return false;
 		}
 
 		//取得資料路徑
-		private static string GetDataPath (string vPath, string vReplace)
+		private static string GetDataPath(string path, string replace)
 		{
-			string vDataPath = vPath.Replace(vReplace, "");
-			string vFileName = Path.GetFileName(vPath);
-			string vExtension = Path.GetExtension(vPath);
-			if (vExtension != "")
+			string dataPath = path.Replace(replace, "");
+			string fileName = Path.GetFileName(path);
+			string extension = Path.GetExtension(path);
+			if (extension != "")
 			{
-				string vFolder = vFileName.Replace(vExtension, "") + "/";
-				vDataPath = vDataPath.Replace(vFolder + vFileName, "");
+				string folder = fileName.Replace(extension, "") + "/";
+				dataPath = dataPath.Replace(folder + fileName, "");
 			}
 			else
 			{
-				vDataPath = vDataPath + "/";
+				dataPath = dataPath + "/";
 			}
-			return vDataPath;
+			return dataPath;
 		}
 
 		//取得語系路徑
-		public static string GetLangPath (string vPath)
+		public static string GetLangPath(string path)
 		{
-			string[] values = Enum.GetNames(typeof(eLanguage));
+			string[] values = System.Enum.GetNames(typeof(eLanguage));
 			foreach (string value in values)
 			{
-				if (vPath.Contains(value + "/") == true)
+				if (path.Contains(value + "/") == true)
 					return value;
 			}
 			return string.Empty;
 		}
 
-		private static void CreateCrcFile (string vPath, string vFileName, uint code)
+		private static void CreateCrcFile(string path, string fileName, uint code)
 		{
-			string vJson = Tools.SerializeObject(new rCRC(vFileName + ".zip", code));
-			Tools.Save(vPath, "." + vFileName + ".crc", System.Text.UTF8Encoding.UTF8.GetBytes(vJson));
-			File.SetAttributes(vPath + "." + vFileName + ".crc", FileAttributes.Hidden);
+			string json = Tools.SerializeObject(new rCRC(fileName + ".zip", code));
+			Tools.Save(path, "." + fileName + ".crc", System.Text.UTF8Encoding.UTF8.GetBytes(json));
+			File.SetAttributes(path + "." + fileName + ".crc", FileAttributes.Hidden);
 		}
 
-		private static uint CreateZipFile (string vPath, string vFileName, string vPWD, List<string> vContainer)
+		private static uint CreateZipFile(string path, string fileName, string pwd, List<string> container)
 		{
 			Crc32 crc = new Crc32();
-			using (ZipOutputStream vZipStream = new ZipOutputStream(File.Create(vPath + vFileName + ".zip")))
+			using (ZipOutputStream zipStream = new ZipOutputStream(File.Create(path + fileName + ".zip")))
 			{
-				vZipStream.Password = vPWD;
-				for (int i = 0; i < vContainer.Count; i++)
+				zipStream.Password = pwd;
+				for (int i = 0; i < container.Count; i++)
 				{
-					FileInfo vInfo = new FileInfo(vContainer[i]);
-					ZipEntry vZipEntry = new ZipEntry(Path.GetFileName(vContainer[i]));
-					vZipEntry.DateTime = vInfo.CreationTime;
-					vZipStream.PutNextEntry(vZipEntry);
+					FileInfo info = new FileInfo(container[i]);
+					ZipEntry zipEntry = new ZipEntry(Path.GetFileName(container[i]));
+					zipEntry.DateTime = info.CreationTime;
+					zipStream.PutNextEntry(zipEntry);
 
-					using (FileStream vFileStream = File.OpenRead(vContainer[i]))
+					using (FileStream fileStream = File.OpenRead(container[i]))
 					{
-						byte[] vBuffer = new byte[vFileStream.Length];
-						crc.Update(vBuffer);
-						StreamUtils.Copy(vFileStream, vZipStream, vBuffer);
-						vFileStream.Close();
+						byte[] buffer = new byte[fileStream.Length];
+						crc.Update(buffer);
+						StreamUtils.Copy(fileStream, zipStream, buffer);
+						fileStream.Close();
 					}
 				}
 			}
-			vContainer.Clear();
+			container.Clear();
 			return (uint)crc.Value;
 		}
 
 		//建立Zip
-		private static void BuildZip (List<string> vFiles, string vPath, string vPWD = "")
+		private static void BuildZip(List<string> files, string path, string pwd = "")
 		{
-			string vZipPath = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + GetDataPath(vPath, Application.dataPath + "/" + Setting.InputAssetsFolder + "/");
-			string vZipName = Path.GetFileNameWithoutExtension(vPath) + "{0}";
+			string zipPath = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + GetDataPath(path, Application.dataPath + "/" + Setting.InputAssetsFolder + "/");
+			string zipName = Path.GetFileNameWithoutExtension(path) + "{0}";
 
-			if (!Directory.Exists(vZipPath))
-				Directory.CreateDirectory(vZipPath);
+			if (!Directory.Exists(zipPath))
+				Directory.CreateDirectory(zipPath);
 			
-			List<string> vContainer = new List<string>();
-			for (int i = 0; i < vFiles.Count; i++)
+			List<string> container = new List<string>();
+			for (int i = 0; i < files.Count; i++)
 			{
-				vContainer.Add(vFiles[i]);
+				container.Add(files[i]);
 
-				if (vContainer.Count != 10)
+				if (container.Count != 10)
 					continue;
 
-				int vCount = Mathf.CeilToInt(i / 10f);
-				string vFileName = string.Format(vZipName, vCount.ToString("D2"));
+				int count = Mathf.CeilToInt(i / 10f);
+				string fileName = string.Format(zipName, count.ToString("D2"));
 
-				uint crc = CreateZipFile(vZipPath, vFileName, vPWD, vContainer);
-				CreateCrcFile(vZipPath, vFileName, crc);
+				uint crc = CreateZipFile(zipPath, fileName, pwd, container);
+				CreateCrcFile(zipPath, fileName, crc);
 			}
 
-			if (vContainer.Count != 0)
+			if (container.Count != 0)
 			{
-				int vCount = Mathf.CeilToInt(vFiles.Count / 10f);
-				string vFileName = string.Format(vZipName, vCount.ToString("D2"));
+				int count = Mathf.CeilToInt(files.Count / 10f);
+				string fileName = string.Format(zipName, count.ToString("D2"));
 
-				uint crc = CreateZipFile(vZipPath, vFileName, vPWD, vContainer);
-				CreateCrcFile(vZipPath, vFileName, crc);
+				uint crc = CreateZipFile(zipPath, fileName, pwd, container);
+				CreateCrcFile(zipPath, fileName, crc);
 			}
 		}
 
 		//處理Zip
-		public static void HandleZip (string vDirectPath, BuildTarget vTarget, bool vIsShow = true)
+		public static void HandleZip(string directPath, BuildTarget target, bool isShow = true)
 		{
-			string[] vPaths = vDirectPath.Split('/');
-			string vPath = Application.dataPath + "/" + string.Join("/", vPaths, 1, vPaths.Length - 1);
-			string vTmp = string.Empty;
+			string[] paths = directPath.Split('/');
+			string path = Application.dataPath + "/" + string.Join("/", paths, 1, paths.Length - 1);
+			string tmp = string.Empty;
 
 			//檢查路徑
-			if (CheckZipPath(vPath) == false)
+			if (CheckZipPath(path) == false)
 			{
-				if (vIsShow == true)
+				if (isShow == true)
 					EditorUtility.DisplayDialog("HandleZip", "Build error and check your path!", "OK");
 				return;
 			}
 
 			//檢查該路徑是否為資料夾
-			if (CheckIsFolder(vPath) == true)
+			if (CheckIsFolder(path) == true)
 			{
-				List<string> vFiles = new List<string>();
+				List<string> files = new List<string>();
 				for (int i = 0; i < Setting.ZipTypeCount; i++)
 				{
-					string[] vFileAry = Directory.GetFiles(vPath, Setting.ZipTypeItems[i].value, SearchOption.AllDirectories);
-					for (int j = 0; j < vFileAry.Length; j++)
+					string[] fileArray = Directory.GetFiles(path, Setting.ZipTypeItems[i].value, SearchOption.AllDirectories);
+					for (int j = 0; j < fileArray.Length; j++)
 					{
-						vTmp = vFileAry[j];
-						vTmp = vTmp.Replace("\\", "/");
-						vFiles.Add(vTmp);
+						tmp = fileArray[j];
+						tmp = tmp.Replace("\\", "/");
+						files.Add(tmp);
 					}
 				}
-				BuildZip(vFiles, vPath);
+				BuildZip(files, path);
 			}
 
-			if (vIsShow == true)
+			if (isShow == true)
 				EditorUtility.DisplayDialog("HandleZip", "Build complete!", "OK");
 
 			AssetDatabase.Refresh();

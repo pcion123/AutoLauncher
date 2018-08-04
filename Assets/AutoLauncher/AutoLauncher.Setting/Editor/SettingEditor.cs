@@ -1,18 +1,19 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
-using UnityEditorInternal;
-using System.Collections;
-using System.IO;
-using AutoLauncher.AssetBundleTool;
-
 namespace AutoLauncher
 {
+	using UnityEngine;
+	using UnityEditor;
+	using UnityEditorInternal;
+	using System.Collections;
+	using System.IO;
+	using AutoLauncher.AssetBundleTool;
+	using AutoLauncher.Enum;
+
 	[CustomEditor(typeof(SettingObject))]
 	public class SettingEditor : UnityEditor.Editor
 	{
 		[MenuItem("AutoLauncher/Setting/Setting")]
-		public static void SettingMenu ()
+		public static void SettingMenu()
 		{
 			Selection.activeObject = Setting.Instance;
 		}
@@ -39,24 +40,24 @@ namespace AutoLauncher
 		ReorderableList mAutoActionList;
 
 		//檢查是否是資料夾
-		private bool CheckIsFolder (string vPath)
+		private bool CheckIsFolder(string path)
 		{
-			FileAttributes vAttr = File.GetAttributes(@vPath);
-			if ((vAttr & FileAttributes.Directory) == FileAttributes.Directory)
+			FileAttributes attr = File.GetAttributes(@path);
+			if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
 				return true;
 			else
 				return false;
 		}
 
-		private static string GetReplaceLangPath (string vPath)
+		private static string GetReplaceLangPath(string path)
 		{
-			string[] strs = vPath.Split('/');
+			string[] strs = path.Split('/');
 			if (strs.Length >= 3)
 				strs[2] = "{0}";
 			return string.Join("/", strs, 0, strs.Length);
 		}
 
-		private void OnEnable ()
+		private void OnEnable()
 		{
 			mStreamingList = new ReorderableList(serializedObject, serializedObject.FindProperty("StreamingItems"), true, true, true, true);
 			mStreamingList.drawHeaderCallback = DrawStreamAssetHeader;
@@ -87,7 +88,7 @@ namespace AutoLauncher
 			mAutoActionList.drawElementCallback = DrawAutoActionElement;
 		}
 
-		public override void OnInspectorGUI ()
+		public override void OnInspectorGUI()
 		{
 			SettingGUI();
 
@@ -102,7 +103,7 @@ namespace AutoLauncher
 			serializedObject.ApplyModifiedProperties();
 		}
 
-		private void SettingGUI ()
+		private void SettingGUI()
 		{
 			//User
 			EditorGUILayout.BeginHorizontal();
@@ -177,42 +178,42 @@ namespace AutoLauncher
 			EditorGUILayout.Space();
 		}
 
-		private void DrawStreamAssetHeader (Rect rect)
+		private void DrawStreamAssetHeader(Rect rect)
 		{
 			GUI.Label(rect, "StreamingAssets");
 		}
 
-		private void DrawOutputAssetHeader (Rect rect)
+		private void DrawOutputAssetHeader(Rect rect)
 		{
 			GUI.Label(rect, "OutputAssets");
 		}
 
-		private void DrawZipPathHeader (Rect rect)
+		private void DrawZipPathHeader(Rect rect)
 		{
 			GUI.Label(rect, "ZipPaths");
 		}
 
-		private void DrawZipTypeHeader (Rect rect)
+		private void DrawZipTypeHeader(Rect rect)
 		{
 			GUI.Label(rect, "ZipTypes");
 		}
 
-		private void DrawDependenceWordHeader (Rect rect)
+		private void DrawDependenceWordHeader(Rect rect)
 		{
 			GUI.Label(rect, "DependenceWords");
 		}
 
-		private void DrawVersionHeader (Rect rect)
+		private void DrawVersionHeader(Rect rect)
 		{
 			GUI.Label(rect, "Versions");
 		}
 
-		private void DrawAutoActionHeader (Rect rect)
+		private void DrawAutoActionHeader(Rect rect)
 		{
 			GUI.Label(rect, "AutoActions");
 		}
 
-		private void DrawStreamAssetElement (Rect rect, int index, bool selected, bool focused)
+		private void DrawStreamAssetElement(Rect rect, int index, bool selected, bool focused)
 		{
 			SerializedProperty itemData = mStreamingList.serializedProperty.GetArrayElementAtIndex(index);
 			Object obj = itemData.FindPropertyRelative("obj").objectReferenceValue;
@@ -237,7 +238,7 @@ namespace AutoLauncher
 			}
 		}
 
-		private void DrawOutputAssetElement (Rect rect, int index, bool selected, bool focused)
+		private void DrawOutputAssetElement(Rect rect, int index, bool selected, bool focused)
 		{
 			SerializedProperty itemData = mOutputList.serializedProperty.GetArrayElementAtIndex(index);
 			Object obj = itemData.FindPropertyRelative("obj").objectReferenceValue;
@@ -262,7 +263,7 @@ namespace AutoLauncher
 			}
 		}
 
-		private void DrawZipPathElement (Rect rect, int index, bool selected, bool focused)
+		private void DrawZipPathElement(Rect rect, int index, bool selected, bool focused)
 		{
 			SerializedProperty itemData = mZipPathList.serializedProperty.GetArrayElementAtIndex(index);
 			Object obj = itemData.FindPropertyRelative("obj").objectReferenceValue;
@@ -286,7 +287,7 @@ namespace AutoLauncher
 			}
 		}
 
-		private void DrawZipTypeElement (Rect rect, int index, bool selected, bool focused)
+		private void DrawZipTypeElement(Rect rect, int index, bool selected, bool focused)
 		{
 			SerializedProperty itemData = mZipTypeList.serializedProperty.GetArrayElementAtIndex(index);
 			Object obj = itemData.FindPropertyRelative("obj").objectReferenceValue;
@@ -312,7 +313,7 @@ namespace AutoLauncher
 			}
 		}
 
-		private void DrawDependenceWordElement (Rect rect, int index, bool selected, bool focused)
+		private void DrawDependenceWordElement(Rect rect, int index, bool selected, bool focused)
 		{
 			SerializedProperty itemData = mDependenceWordList.serializedProperty.GetArrayElementAtIndex(index);
 			Object obj = itemData.FindPropertyRelative("obj").objectReferenceValue;
@@ -343,7 +344,7 @@ namespace AutoLauncher
 			}
 		}
 
-		private void DrawVersionElement (Rect rect, int index, bool selected, bool focused)
+		private void DrawVersionElement(Rect rect, int index, bool selected, bool focused)
 		{
 			SerializedProperty itemData = mVersionList.serializedProperty.GetArrayElementAtIndex(index);
 			Object obj = itemData.FindPropertyRelative("obj").objectReferenceValue;
@@ -370,7 +371,7 @@ namespace AutoLauncher
 			}
 		}
 
-		private void DrawAutoActionElement (Rect rect, int index, bool selected, bool focused)
+		private void DrawAutoActionElement(Rect rect, int index, bool selected, bool focused)
 		{
 			SerializedProperty itemData = mAutoActionList.serializedProperty.GetArrayElementAtIndex(index);
 			Object obj = itemData.FindPropertyRelative("obj").objectReferenceValue;

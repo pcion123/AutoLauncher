@@ -1,20 +1,20 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
-using System.Collections;
-using System.Collections.Generic;
-using System;
-using System.IO;
-
 namespace AutoLauncher.AssetBundleTool
 {
+	using UnityEngine;
+	using UnityEditor;
+	using System.Collections;
+	using System.Collections.Generic;
+	using System;
+	using System.IO;
+	using Object = UnityEngine.Object;
+
 	public class Watch : EditorWindow
 	{
 		private struct WatchData
 		{
 			public string TypeName;
 			public string FileName;
-			public int Size;
 		}
 
 		private class WatchDataComparer : IComparer<WatchData>
@@ -31,15 +31,15 @@ namespace AutoLauncher.AssetBundleTool
 		private Vector2 mScrollPos = Vector2.zero;
 
 		[MenuItem("AutoLauncher/Window/Bundle Watch", false, 999)]
-		public static void Open ()
+		public static void Open()
 		{
-			EditorWindow vScript = EditorWindow.GetWindow(typeof(Watch));
-			vScript.autoRepaintOnSceneChange = true;
-			vScript.Show();
-			vScript.titleContent = new GUIContent("Bundle Watch");
+			EditorWindow script = EditorWindow.GetWindow(typeof(Watch));
+			script.autoRepaintOnSceneChange = true;
+			script.Show();
+			script.titleContent = new GUIContent("Bundle Watch");
 		}
 
-		void OnGUI ()
+		void OnGUI()
 		{
 			EditorGUILayout.LabelField("Asset bundle to watch", EditorStyles.boldLabel);
 
@@ -49,31 +49,31 @@ namespace AutoLauncher.AssetBundleTool
 				return;
 			}
 
-			if ((Selection.activeObject is DefaultAsset) == false)
+			if (!(Selection.activeObject is DefaultAsset))
 			{
 				EditorGUILayout.LabelField("Select not Assetbundle.");
 				return;
 			}
 
-			string vPath = Path.GetFullPath(AssetDatabase.GetAssetPath(Selection.activeObject));
+			string path = Path.GetFullPath(AssetDatabase.GetAssetPath(Selection.activeObject));
 
-			if (vPath.ToLower().Contains(".unity3d") == false)
+			if (!path.ToLower().Contains(".unity3d"))
 			{
 				EditorGUILayout.LabelField("Select not Assetbundle.");
 				return;
 			}
 
 			if (mInfo == null)
-				mInfo = new FileInfo(vPath);
+				mInfo = new FileInfo(path);
 
-			EditorGUILayout.LabelField("Asset: " + vPath);
+			EditorGUILayout.LabelField("Asset: " + path);
 			EditorGUILayout.LabelField("Size: " + mInfo.Length);
 			EditorGUILayout.LabelField("CreationTime: " + mInfo.CreationTime);
 			EditorGUILayout.LabelField("LastAccessTime: " + mInfo.LastAccessTime);
 			EditorGUILayout.LabelField("LastWriteTime: " + mInfo.LastWriteTime);
 
-			if (GUILayout.Button("Watch") == true)
-				Watcher(vPath);
+			if (GUILayout.Button("Watch"))
+				Watcher(path);
 
 			if ((mDataList == null) || (mDataList.Count == 0))
 				return;
@@ -100,12 +100,12 @@ namespace AutoLauncher.AssetBundleTool
 			EditorGUILayout.EndScrollView();
 		}
 
-		void OnInspectorUpdate ()
+		void OnInspectorUpdate()
 		{
 			Repaint();
 		}
 
-		void OnSelectionChange ()
+		void OnSelectionChange()
 		{
 			if (mDataList != null)
 				mDataList.Clear();
@@ -116,9 +116,9 @@ namespace AutoLauncher.AssetBundleTool
 			mInfo = null;
 		}
 
-		private void Watcher (string vPath)
+		private void Watcher(string path)
 		{
-			if (string.IsNullOrEmpty(vPath) == true)
+			if (string.IsNullOrEmpty(path))
 				return;
 
 			if (mDataList == null)
@@ -129,35 +129,31 @@ namespace AutoLauncher.AssetBundleTool
 
 			mDataList.Clear();
 			mTypeStatusMap.Clear();
-			Load(vPath);
+			Load(path);
 		}
 
 		//載入資源
-		private void Load (string vPath)
+		private void Load(string path)
 		{
 			//檢查檔案是否存在
-			if (File.Exists(vPath) == false)
+			if (!File.Exists(path))
 			{
-				Debug.LogWarning(vPath + " is not exists");
+				Debug.LogWarning(path + " is not exists");
 				return;
 			}
 
-			Uri vUri = new Uri(vPath);
-
-			vPath = vUri.AbsoluteUri;
-
-			WWW vBundle = new WWW(vPath);
-
-			if (vBundle.assetBundle.isStreamedSceneAssetBundle == true)
+			Uri uri = new Uri(path);
+			path = uri.AbsoluteUri;
+			WWW bundle = new WWW(path);
+			if (bundle.assetBundle.isStreamedSceneAssetBundle == true)
 			{
-				string[] vNames = vBundle.assetBundle.GetAllScenePaths();
-
-				for (int i = 0; i < vNames.Length; i++)
+				string[] names = bundle.assetBundle.GetAllScenePaths();
+				for (int i = 0; i < names.Length; i++)
 				{
-					WatchData vData = new WatchData();
-					vData.TypeName = "Scene";
-					vData.FileName = vNames[i];
-					mDataList.Add(vData);
+					WatchData data = new WatchData();
+					data.TypeName = "Scene";
+					data.FileName = names[i];
+					mDataList.Add(data);
 				}
 
 				foreach (WatchData data in mDataList)
@@ -175,20 +171,19 @@ namespace AutoLauncher.AssetBundleTool
 			}
 			else
 			{
-				UnityEngine.Object[] vAry = vBundle.assetBundle.LoadAllAssets();
-
-				if (vAry == null)
+				Object[] array = bundle.assetBundle.LoadAllAssets();
+				if (array == null)
 				{
 
 				}
 				else
 				{
-					for (int i = 0; i < vAry.Length; i++)
+					for (int i = 0; i < array.Length; i++)
 					{
-						WatchData vData = new WatchData();
-						vData.TypeName = vAry[i].GetType().FullName;
-						vData.FileName = vAry[i].name;
-						mDataList.Add(vData);
+						WatchData data = new WatchData();
+						data.TypeName = array[i].GetType().FullName;
+						data.FileName = array[i].name;
+						mDataList.Add(data);
 					}
 
 					foreach (WatchData data in mDataList)
@@ -205,10 +200,9 @@ namespace AutoLauncher.AssetBundleTool
 					mDataList.Sort(new WatchDataComparer());
 				}
 			}
-
-			vBundle.assetBundle.Unload(true);
-			vBundle.Dispose();
-			vBundle = null;
+			bundle.assetBundle.Unload(true);
+			bundle.Dispose();
+			bundle = null;
 		}
 	}
 }
