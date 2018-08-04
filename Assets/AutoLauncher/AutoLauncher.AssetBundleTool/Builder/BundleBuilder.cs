@@ -1,212 +1,209 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
-using System.Collections;
-using System.Collections.Generic;
-using System;
-using System.IO;
-using Object = UnityEngine.Object;
-using Tools = AutoLauncher.Utility.Tools;
-
 namespace AutoLauncher.AssetBundleTool
 {
+	using UnityEngine;
+	using UnityEditor;
+	using System.Collections;
+	using System.Collections.Generic;
+	using System;
+	using System.IO;
+	using Object = UnityEngine.Object;
+	using Tools = AutoLauncher.Utility.Tools;
+
 	public static class BundleBuilder : object
 	{
 		private const BuildAssetBundleOptions UncompressedOption = BuildAssetBundleOptions.CollectDependencies | BuildAssetBundleOptions.CompleteAssets | BuildAssetBundleOptions.DeterministicAssetBundle | BuildAssetBundleOptions.UncompressedAssetBundle;
 		private const BuildAssetBundleOptions CompressedOption   = BuildAssetBundleOptions.CollectDependencies | BuildAssetBundleOptions.CompleteAssets | BuildAssetBundleOptions.DeterministicAssetBundle;
 
 		//檢查包Bundle路徑
-		private static bool CheckBundlePath (string vPath)
+		private static bool CheckBundlePath(string path)
 		{
-			if (vPath == string.Empty || vPath == null)
+			if (path == string.Empty || path == null)
 				return false;
 
-			if (vPath.Contains(Application.dataPath + "/" + Setting.InputAssetsFolder) == false)
+			if (path.Contains(Application.dataPath + "/" + Setting.InputAssetsFolder) == false)
 				return false;
 
 			return true;
 		}
 
 		//檢查是否是資料夾
-		private static bool CheckIsFolder (string vPath)
+		private static bool CheckIsFolder(string path)
 		{
-			FileAttributes vAttr = File.GetAttributes(@vPath);
-			if ((vAttr & FileAttributes.Directory) == FileAttributes.Directory)
+			FileAttributes attr = File.GetAttributes(@path);
+			if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
 				return true;
 			else
 				return false;
 		}
 
 		//檢查是否為Atlas資源
-		private static bool CheckIsAtlas (string vPath)
+		private static bool CheckIsAtlas(string path)
 		{
-			if (vPath.Contains("-Atlas") == true)
-				return true;
-			else
-				return false;
+			return path.Contains("-Atlas");
 		}
 
 		//檢查是否為字型資源
-		private static bool CheckIsWordPrefab (string vPath)
+		private static bool CheckIsWordPrefab(string path)
 		{
 			for (int i = 0; i < Setting.DependenceWordCount; i++)
 			{
-				string str = Application.dataPath + "/" + Setting.InputAssetsFolder + "/" + GetLangPath(vPath) + "/" + Setting.DependenceWords[i].value;
-				if (string.Compare(vPath, str) == 0)
+				string str = Application.dataPath + "/" + Setting.InputAssetsFolder + "/" + GetLangPath(path) + "/" + Setting.DependenceWords[i].value;
+				if (string.Compare(path, str) == 0)
 					return true;
 			}
 			return false;
 		}
 
-		private static Object[] GetDependenceWords(string vPath)
+		private static Object[] GetDependenceWords(string path)
 		{
 			List<Object> list = new List<Object>();
 			for (int i = 0; i < Setting.DependenceWordCount; i++)
 			{
-				Object vWord = AssetDatabase.LoadMainAssetAtPath(string.Format(Setting.DependenceWords[i].value, GetLangPath(vPath)));
-				list.Add(vWord);
+				Object word = AssetDatabase.LoadMainAssetAtPath(string.Format(Setting.DependenceWords[i].value, GetLangPath(path)));
+				list.Add(word);
 			}
 			return list.ToArray();
 		}
 
-		private static Object[] GetPrefabObjects (string vPath)
+		private static Object[] GetPrefabObjects(string path)
 		{
-			string[] vObjPaths = Directory.GetFiles(vPath.Replace(Path.GetFileName(vPath), ""), "*.prefab", SearchOption.AllDirectories);
-			List<Object> vAssets = new List<Object>();
-			foreach (string vObjPath in vObjPaths)
+			string[] objPaths = Directory.GetFiles(path.Replace(Path.GetFileName(path), ""), "*.prefab", SearchOption.AllDirectories);
+			List<Object> assets = new List<Object>();
+			foreach (string objPath in objPaths)
 			{
-				if (vObjPath.Contains(".svn") == true) 
+				if (objPath.Contains(".svn") == true) 
 					continue;
 				
 				try
 				{
-					Object vTmp = AssetDatabase.LoadMainAssetAtPath(string.Format("{0}/{1}", "Assets", vObjPath.Replace(Application.dataPath + "/", "")));
+					Object vTmp = AssetDatabase.LoadMainAssetAtPath(string.Format("{0}/{1}", "Assets", objPath.Replace(Application.dataPath + "/", "")));
 
 					if (vTmp == null) 
 						continue;
 
-					vAssets.Add(vTmp);
+					assets.Add(vTmp);
 				}
 				catch (Exception e)
 				{
-					Debug.LogError(string.Format("GetPrefabObjects Error -> {0} {1}", vObjPath, e.Message));
+					Debug.LogError(string.Format("GetPrefabObjects Error -> {0} {1}", objPath, e.Message));
 				}
 			}
-			return vAssets.ToArray();
+			return assets.ToArray();
 		}
 
 		//取得資料路徑
-		private static string GetDataPath (string vPath, string vReplace)
+		private static string GetDataPath(string path, string replace)
 		{
-			string vDataPath = vPath.Replace(vReplace, "");
-			string vFileName = Path.GetFileName(vPath);
-			string vExtension = Path.GetExtension(vPath);
-			if (vExtension != "")
+			string dataPath = path.Replace(replace, "");
+			string fileName = Path.GetFileName(path);
+			string extension = Path.GetExtension(path);
+			if (extension != "")
 			{
-				string vFolder = vFileName.Replace(vExtension, "") + "/";
-				vDataPath = vDataPath.Replace(vFolder + vFileName, "");
+				string folder = fileName.Replace(extension, "") + "/";
+				dataPath = dataPath.Replace(folder + fileName, "");
 			}
 			else
 			{
-				vDataPath = vDataPath + "/";
+				dataPath = dataPath + "/";
 			}
-			return vDataPath;
+			return dataPath;
 		}
 
 		//取得語系路徑
-		public static string GetLangPath (string vPath)
+		public static string GetLangPath(string path)
 		{
-			string[] values = Enum.GetNames(typeof(eLanguage));
+			string[] values = System.Enum.GetNames(typeof(eLanguage));
 			foreach (string value in values)
 			{
-				if (vPath.Contains(value + "/") == true)
+				if (path.Contains(value + "/") == true)
 					return value;
 			}
 			return string.Empty;
 		}
 
-		private static void CreateCrcFile (string vPath, string vFileName, uint code)
+		private static void CreateCrcFile(string path, string fileName, uint code)
 		{
-			string vJson = Tools.SerializeObject(new rCRC(vFileName + ".unity3d", code));
-			Tools.Save(vPath, "." + vFileName + ".crc", System.Text.UTF8Encoding.UTF8.GetBytes(vJson));
-			File.SetAttributes(vPath + "." + vFileName + ".crc", FileAttributes.Hidden);
+			string json = Tools.SerializeObject(new rCRC(fileName + ".unity3d", code));
+			Tools.Save(path, "." + fileName + ".crc", System.Text.UTF8Encoding.UTF8.GetBytes(json));
+			File.SetAttributes(path + "." + fileName + ".crc", FileAttributes.Hidden);
 		}
 
 		//建立Bundle
-		private static void BuildBundle (string vPath, BuildTarget vTarget, bool vIsCompress)
+		private static void BuildBundle(string dataPath, BuildTarget target, bool isCompress)
 		{
-			string vBundlePath = "Assets/" + Setting.OutputAssetsFolder + "/" + GetDataPath(vPath, Application.dataPath + "/" + Setting.InputAssetsFolder + "/");
-			string vBundleName = Path.GetFileNameWithoutExtension(vPath);
-			string vLangPath = GetLangPath(vPath);
+			string bundlePath = "Assets/" + Setting.OutputAssetsFolder + "/" + GetDataPath(dataPath, Application.dataPath + "/" + Setting.InputAssetsFolder + "/");
+			string bundleName = Path.GetFileNameWithoutExtension(dataPath);
+			string langPath = GetLangPath(dataPath);
 
-			if (CheckIsWordPrefab(vPath) == true)
+			if (CheckIsWordPrefab(dataPath) == true)
 				return;
 
-			Object[] vWords = GetDependenceWords(vPath);
-			Object[] vAssets = GetPrefabObjects(vPath);
+			Object[] words = GetDependenceWords(dataPath);
+			Object[] assets = GetPrefabObjects(dataPath);
 
 			//檢查AssetBundle目錄是否存在
-			if (!Directory.Exists(vBundlePath))
-				Directory.CreateDirectory(vBundlePath);
+			if (!Directory.Exists(bundlePath))
+				Directory.CreateDirectory(bundlePath);
 
 			for (int i = 0; i < Setting.DependenceWordCount; i++)
 			{
 				string[] paths = Setting.DependenceWords[i].value.Split('/');
 				string path = "Assets/" + Setting.OutputAssetsFolder + "/" + string.Join("/", paths, 2, paths.Length - 4);
 				//檢查AssetBundle目錄是否存在
-				if (!Directory.Exists(string.Format(path, vLangPath)))
-					Directory.CreateDirectory(string.Format(path, vLangPath));
+				if (!Directory.Exists(string.Format(path, langPath)))
+					Directory.CreateDirectory(string.Format(path, langPath));
 			}
 
-			Debug.Log("Build bundle: " + vBundlePath + vBundleName);
+			Debug.Log("Build bundle: " + bundlePath + bundleName);
 
-			BuildAssetBundleOptions vOptions = vIsCompress ? CompressedOption : UncompressedOption;
+			BuildAssetBundleOptions options = isCompress ? CompressedOption : UncompressedOption;
 			BuildPipeline.PushAssetDependencies();
-			List<uint> vWordCrcs = new List<uint>();
-			for (int i = 0; i < vWords.Length; i++)
+			List<uint> wordCrcs = new List<uint>();
+			for (int i = 0; i < words.Length; i++)
 			{
 				uint crc = 0;
 				string[] paths = Setting.DependenceWords[i].value.Split('/');
 				string path = "Assets/" + Setting.OutputAssetsFolder + "/" + string.Join("/", paths, 2, paths.Length - 4);
 				string name = paths[paths.Length - 2] + ".unity3d";
-				BuildPipeline.BuildAssetBundle(vWords[i], null, string.Format(path, vLangPath) + "/" + name, out crc, vOptions, vTarget);
-				vWordCrcs.Add(crc);
+				BuildPipeline.BuildAssetBundle(words[i], null, string.Format(path, langPath) + "/" + name, out crc, options, target);
+				wordCrcs.Add(crc);
 			}
-			if (vBundleName.Contains("Panel_") == true)
+			if (bundleName.Contains("Panel_") == true)
 			{
-				uint vAtlasCode = 0;
-				uint vPrefabCode = 0;
+				uint atlasCode = 0;
+				uint prefabCode = 0;
 				BuildPipeline.PushAssetDependencies();
-				if (vAssets.Length == 2)
+				if (assets.Length == 2)
 				{
-					BuildPipeline.BuildAssetBundle(vAssets[0], null, vBundlePath + vBundleName + "-Atlas.unity3d", out vAtlasCode, vOptions, vTarget);
+					BuildPipeline.BuildAssetBundle(assets[0], null, bundlePath + bundleName + "-Atlas.unity3d", out atlasCode, options, target);
 					BuildPipeline.PushAssetDependencies();
-					BuildPipeline.BuildAssetBundle(vAssets[1], null, vBundlePath + vBundleName + ".unity3d", out vPrefabCode, vOptions, vTarget);
+					BuildPipeline.BuildAssetBundle(assets[1], null, bundlePath + bundleName + ".unity3d", out prefabCode, options, target);
 					BuildPipeline.PopAssetDependencies();
 				}
 				else
 				{
-					BuildPipeline.BuildAssetBundle(vAssets[0], null, vBundlePath + vBundleName + ".unity3d", out vPrefabCode, vOptions, vTarget);
+					BuildPipeline.BuildAssetBundle(assets[0], null, bundlePath + bundleName + ".unity3d", out prefabCode, options, target);
 				}
 				BuildPipeline.PopAssetDependencies();
 
-				if (vAssets.Length == 2)
+				if (assets.Length == 2)
 				{
-					CreateCrcFile(vBundlePath, vBundleName + "-Atlas", vAtlasCode);
-					CreateCrcFile(vBundlePath, vBundleName, vPrefabCode);
+					CreateCrcFile(bundlePath, bundleName + "-Atlas", atlasCode);
+					CreateCrcFile(bundlePath, bundleName, prefabCode);
 				}
 				else
 				{
-					CreateCrcFile(vBundlePath, vBundleName, vPrefabCode);
+					CreateCrcFile(bundlePath, bundleName, prefabCode);
 				}
 			}
 			else
 			{
-				uint vPrefabCode = 0;
+				uint prefabCode = 0;
 				BuildPipeline.PushAssetDependencies();
-				BuildPipeline.BuildAssetBundle(vAssets[0], vAssets, vBundlePath + vBundleName + ".unity3d", out vPrefabCode, vOptions, vTarget);
+				BuildPipeline.BuildAssetBundle(assets[0], assets, bundlePath + bundleName + ".unity3d", out prefabCode, options, target);
 				BuildPipeline.PopAssetDependencies();
-				CreateCrcFile(vBundlePath, vBundleName, vPrefabCode);
+				CreateCrcFile(bundlePath, bundleName, prefabCode);
 			}
 			BuildPipeline.PopAssetDependencies();
 
@@ -215,51 +212,51 @@ namespace AutoLauncher.AssetBundleTool
 				string[] paths = Setting.DependenceWords[i].value.Split('/');
 				string path = "Assets/" + Setting.OutputAssetsFolder + "/" + string.Join("/", paths, 2, paths.Length - 4) + "/";
 				string name = paths[paths.Length - 2];
-				CreateCrcFile(string.Format(path, vLangPath), name, vWordCrcs[i]);
+				CreateCrcFile(string.Format(path, langPath), name, wordCrcs[i]);
 			}
 
-			Debug.Log("Build bundle: " + vBundlePath + vBundleName + " is ok!");
+			Debug.Log("Build bundle: " + bundlePath + bundleName + " is ok!");
 		}
 
 		//處理Bundle
-		public static void HandleBundle (string vDirectPath, BuildTarget vTarget, bool vIsCompress, bool vIsShow = true)
+		public static void HandleBundle(string directPath, BuildTarget target, bool isCompress, bool isShow = true)
 		{
-			string[] vPaths = vDirectPath.Split('/');
-			string vPath = Application.dataPath + "/" + string.Join("/", vPaths, 1, vPaths.Length - 1);
-			string vTmp = string.Empty;
+			string[] paths = directPath.Split('/');
+			string path = Application.dataPath + "/" + string.Join("/", paths, 1, paths.Length - 1);
+			string tmp = string.Empty;
 
 			//檢查路徑
-			if (CheckBundlePath(vPath) == false)
+			if (CheckBundlePath(path) == false)
 			{
-				if (vIsShow == true)
+				if (isShow == true)
 					EditorUtility.DisplayDialog("HandleBundle", "Build error and check your path!", "OK");
 				return;
 			}
 
 			//檢查該路徑是否為資料夾
-			if (CheckIsFolder(vPath) == true)
+			if (CheckIsFolder(path) == true)
 			{
-				string[] vFileAry = Directory.GetFiles(vPath, "*.prefab", SearchOption.AllDirectories);
-				for (int i = 0; i < vFileAry.Length; i++)
+				string[] fileArray = Directory.GetFiles(path, "*.prefab", SearchOption.AllDirectories);
+				for (int i = 0; i < fileArray.Length; i++)
 				{
-					vTmp = vFileAry[i];
-					vTmp = vTmp.Replace("\\", "/");
+					tmp = fileArray[i];
+					tmp = tmp.Replace("\\", "/");
 
-					if (CheckIsAtlas(vTmp) == true)
+					if (CheckIsAtlas(tmp) == true)
 						continue;
 
-					BuildBundle(vTmp, vTarget, vIsCompress);
+					BuildBundle(tmp, target, isCompress);
 				}
 			}
 			else
 			{
-				vTmp = vPath;
-				vTmp = vTmp.Replace("\\", "/");
+				tmp = path;
+				tmp = tmp.Replace("\\", "/");
 
-				BuildBundle(vTmp, vTarget, vIsCompress);
+				BuildBundle(tmp, target, isCompress);
 			}
 
-			if (vIsShow == true)
+			if (isShow == true)
 				EditorUtility.DisplayDialog("HandleBundle", "Build complete!", "OK");
 
 			AssetDatabase.Refresh();

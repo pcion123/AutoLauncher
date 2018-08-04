@@ -1,13 +1,13 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
-using UnityEditor.Experimental.AssetImporters;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-
-namespace AutoLauncher
+namespace AutoLauncher.Importer
 {
+	using UnityEngine;
+	using UnityEditor;
+	using UnityEditor.Experimental.AssetImporters;
+	using System.Collections;
+	using System.Collections.Generic;
+	using System.IO;
+
 	[CustomEditor(typeof(JsonImporter))]
 	public class JsonImporterEditor : ScriptedImporterEditor
 	{

@@ -1,10 +1,10 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-
 namespace AutoLauncher.Utility
 {
+	using UnityEngine;
+	using System.Collections;
+	using System.Collections.Generic;
+
 	public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, ISerializationCallbackReceiver
 	{
 		[SerializeField]

@@ -1,8 +1,4 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
-using System.Collections;
-
 namespace AutoLauncher.AssetBundleTool
 {
 	//CRC結構
@@ -11,10 +7,10 @@ namespace AutoLauncher.AssetBundleTool
 		public string FileName;
 		public uint CRC;
 
-		public rCRC (string vFileName, uint vCRC)
+		public rCRC(string fileName, uint crc)
 		{
-			FileName = vFileName;
-			CRC = vCRC;
+			FileName = fileName;
+			CRC = crc;
 		}
 	}
 

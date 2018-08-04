@@ -1,14 +1,15 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using AutoLauncher.AssetBundleTool;
-using Tools = AutoLauncher.Utility.Tools;
-
 namespace AutoLauncher
 {
+	using UnityEngine;
+	using UnityEditor;
+	using System.Collections;
+	using System.Collections.Generic;
+	using System.IO;
+	using AutoLauncher.AssetBundleTool;
+	using AutoLauncher.Enum;
+	using Tools = AutoLauncher.Utility.Tools;
+
 	[InitializeOnLoad]
 	public static class Setting : object
 	{
@@ -19,11 +20,11 @@ namespace AutoLauncher
 			public string IP;
 			public string Version;
 
-			public rSave (string vName, string vIP, string vVersion)
+			public rSave(string name, string ip, string version)
 			{
-				Name = vName;
-				IP = vIP;
-				Version = vVersion;
+				Name = name;
+				IP = ip;
+				Version = version;
 			}
 		}
 
@@ -455,7 +456,7 @@ namespace AutoLauncher
 			}
 		}
 
-		static Setting ()
+		static Setting()
 		{
 			if (mInstance == null)
 			{
@@ -477,15 +478,12 @@ namespace AutoLauncher
 			}
 		}
 
-		private static void SaveInfo (rSave vSave)
+		private static void SaveInfo(rSave save)
 		{
-			string vPath = Application.streamingAssetsPath + "/";
-			string vName = "HTTP.dat";
-
-			//Json序列化
-			string zJson = Tools.SerializeObject(vSave);
-
-			Tools.Save(vPath, vName, System.Text.UTF8Encoding.UTF8.GetBytes(zJson));
+			string path = Application.streamingAssetsPath + "/";
+			string name = "HTTP.dat";
+			string json = Tools.SerializeObject(save);
+			Tools.Save(path, name, System.Text.UTF8Encoding.UTF8.GetBytes(json));
 
 			AssetDatabase.Refresh();
 		}

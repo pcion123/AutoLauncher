@@ -1,46 +1,47 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
-using System.Collections;
-using System.Collections.Generic;
-using System.Net;
-using System.IO;
-using Tools = AutoLauncher.Utility.Tools;
-
 namespace AutoLauncher.AssetBundleTool
 {
+	using UnityEngine;
+	using UnityEditor;
+	using System.Collections;
+	using System.Collections.Generic;
+	using System.Net;
+	using System.IO;
+	using AutoLauncher.Enum;
+	using Tools = AutoLauncher.Utility.Tools;
+
 	public static class FTP : object
 	{
 		//FTP檔頭
 		private const string HEADER = "ftp://";
 
 		//檢查上傳路徑
-		private static bool CheckOutputPath (string vPath)
+		private static bool CheckOutputPath(string path)
 		{
-			if (vPath == "")
+			if (path == "")
 				return false;
 
-			if (vPath.Contains(Application.dataPath + "/" + Setting.OutputAssetsFolder) == false)
+			if (!path.Contains(Application.dataPath + "/" + Setting.OutputAssetsFolder))
 				return false;
 
 			return true;
 		}
 
 		//檢查是否需要上傳
-		private static bool CheckNeedUpload (rRes vData, List<rRes> vList)
+		private static bool CheckNeedUpload(rRes data, List<rRes> list)
 		{
-			if (vList == null)
+			if (list == null)
 				return true;
 
-			for (int i = 0; i < vList.Count; i++)
+			for (int i = 0; i < list.Count; i++)
 			{
-				if (vData.Path != vList[i].Path)
+				if (data.Path != list[i].Path)
 					continue;
 
-				if (vData.FileName != vList[i].FileName)
+				if (data.FileName != list[i].FileName)
 					continue;
 
-				if (vData.MD5Code == vList[i].MD5Code)
+				if (data.MD5Code == list[i].MD5Code)
 					return false;
 				else
 					return true;
@@ -50,28 +51,28 @@ namespace AutoLauncher.AssetBundleTool
 		}
 
 		//檢查是否是資料夾
-		private static bool CheckIsFolder (string vPath)
+		private static bool CheckIsFolder(string path)
 		{
-			FileAttributes vAttr = File.GetAttributes(@vPath);
-			if ((vAttr & FileAttributes.Directory) == FileAttributes.Directory)
+			FileAttributes attr = File.GetAttributes(@path);
+			if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
 				return true;
 			else
 				return false;
 		}
 
 		//檢查FTP是否有該目錄
-		private static bool CheckDirExist (string vUser, string vPWD, string vPath)
+		private static bool CheckDirExist(string user, string pwd, string path)
 		{
-			System.Uri vUri = new System.Uri(vPath);
+			System.Uri uri = new System.Uri(path);
 			try
 			{
 				// Get the object used to communicate with the server.
-				FtpWebRequest request = (FtpWebRequest)WebRequest.Create(vUri);
+				FtpWebRequest request = (FtpWebRequest)WebRequest.Create(uri);
 				request.Method = WebRequestMethods.Ftp.PrintWorkingDirectory;
 				request.Timeout = 60000;
 
 				// This example assumes the FTP site uses anonymous logon.
-				request.Credentials = new NetworkCredential(vUser, vPWD);
+				request.Credentials = new NetworkCredential(user, pwd);
 
 				FtpWebResponse response = (FtpWebResponse)request.GetResponse();
 				response.Close();
@@ -88,158 +89,149 @@ namespace AutoLauncher.AssetBundleTool
 		}
 
 		//取得FTP路徑
-		public static string GetLocation (string vIP)
+		public static string GetLocation(string ip)
 		{
 			switch (Setting.BuildType)
 			{
 				case BuildTarget.StandaloneWindows:
-					return HEADER + vIP + "/Windows/";
+					return HEADER + ip + "/Windows/";
 				case BuildTarget.iOS:
-					return HEADER + vIP + "/Ios/";
+					return HEADER + ip + "/Ios/";
 				case BuildTarget.Android:
-					return HEADER + vIP + "/Android/";
+					return HEADER + ip + "/Android/";
 			}
 			return string.Empty;
 		}
 
 		//取得語系路徑
-		private static string GetLangPath (eLanguage vLang, bool vIsSlash = false)
+		private static string GetLangPath(eLanguage lang, bool isSlash = false)
 		{
-			return vIsSlash ? vLang.ToString() + "/" : vLang.ToString();
+			return isSlash ? lang.ToString() + "/" : lang.ToString();
 		}
 
 		//取得資料路徑
-		private static string GetDataPath (string vPath, string vReplace)
+		private static string GetDataPath(string path, string replace)
 		{
-			string vDataPath = vPath.Replace(vReplace, "");
-			string vFileName = Path.GetFileName(vPath);
-			string vExtension = Path.GetExtension(vPath);
-			if (vExtension != "")
+			string dataPath = path.Replace(replace, "");
+			string fileName = Path.GetFileName(path);
+			string extension = Path.GetExtension(path);
+			if (extension != "")
 			{
-				string vFolder = vFileName.Replace(vExtension, "") + "/";
-				vDataPath = vDataPath.Replace(vFolder + vFileName, "");
+				string folder = fileName.Replace(extension, "") + "/";
+				dataPath = dataPath.Replace(folder + fileName, "");
 			}
 			else
 			{
-				vDataPath = vDataPath + "/";
+				dataPath = dataPath + "/";
 			}
-			return vDataPath;
+			return dataPath;
 		}
 
 		//取得上傳列表
-		private static List<rRes> GetUploadList (eLanguage vLang)
+		private static List<rRes> GetUploadList(eLanguage lang)
 		{
-			List<rRes> vList = new List<rRes>();
-			byte[] vData = null;
-			rRes[] vResData = null;
-			string vJson = string.Empty;
-			string vPath = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + GetLangPath(vLang, true) + "Versions/";
-
+			List<rRes> list = new List<rRes>();
+			byte[] data = null;
+			rRes[] resData = null;
+			string json = string.Empty;
+			string path = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + GetLangPath(lang, true) + "Versions/";
 			if (Setting.VersionItems == null || Setting.VersionItems.Count == 0)
 			{
-				vData = Tools.Load(vPath, "Main.res", Setting.EncryptionKeyValue);
-				if (vData != null)
+				data = Tools.Load(path, "Main.res", Setting.EncryptionKeyValue);
+				if (data != null)
 				{
-					vJson = System.Text.UTF8Encoding.UTF8.GetString(vData);
-					vResData = Tools.DeserializeObject<rRes[]>(vJson);
-					for (int i = 0; i < vResData.Length; i++)
-						vList.Add(vResData[i]);
+					json = System.Text.UTF8Encoding.UTF8.GetString(data);
+					resData = Tools.DeserializeObject<rRes[]>(json);
+					for (int i = 0; i < resData.Length; i++)
+						list.Add(resData[i]);
 				}
 			}
 			else
 			{
 				for (int i = 0; i < Setting.VersionItems.Count; i++)
 				{
-					vData = Tools.Load(vPath, Setting.VersionItems[i].ver, Setting.EncryptionKeyValue);
-					if (vData != null)
+					data = Tools.Load(path, Setting.VersionItems[i].ver, Setting.EncryptionKeyValue);
+					if (data != null)
 					{
-						vJson = System.Text.UTF8Encoding.UTF8.GetString(vData);
-						vResData = Tools.DeserializeObject<rRes[]>(vJson);
-						for (int j = 0; j < vResData.Length; j++)
-							vList.Add(vResData[j]);
+						json = System.Text.UTF8Encoding.UTF8.GetString(data);
+						resData = Tools.DeserializeObject<rRes[]>(json);
+						for (int j = 0; j < resData.Length; j++)
+							list.Add(resData[j]);
 					}
 				}
 			}
-
-			return vList;
+			return list;
 		}
 
 		//取得下載列表
-		private static List<rRes> GetDownloadList (eLanguage vLang)
+		private static List<rRes> GetDownloadList(eLanguage lang)
 		{
-			List<rRes> vList = new List<rRes>();
-			byte[] vData = null;
-			rRes[] vResData = null;
-			string vJson = string.Empty;
-			string vPath = Application.dataPath + "/" + Setting.DownloadAssetsFolder + "/" + GetLangPath(vLang, true) + "Versions/";
-
+			List<rRes> list = new List<rRes>();
+			byte[] data = null;
+			rRes[] resData = null;
+			string json = string.Empty;
+			string path = Application.dataPath + "/" + Setting.DownloadAssetsFolder + "/" + GetLangPath(lang, true) + "Versions/";
 			if (Setting.VersionItems == null || Setting.VersionItems.Count == 0)
 			{
-				vData = Tools.Load(vPath, "Main.res", Setting.EncryptionKeyValue);
-				if (vData != null)
+				data = Tools.Load(path, "Main.res", Setting.EncryptionKeyValue);
+				if (data != null)
 				{
-					vJson = System.Text.UTF8Encoding.UTF8.GetString(vData);
-					vResData = Tools.DeserializeObject<rRes[]>(vJson);
-					for (int i = 0; i < vResData.Length; i++)
-						vList.Add(vResData[i]);
+					json = System.Text.UTF8Encoding.UTF8.GetString(data);
+					resData = Tools.DeserializeObject<rRes[]>(json);
+					for (int i = 0; i < resData.Length; i++)
+						list.Add(resData[i]);
 				}
 			}
 			else
 			{
 				for (int i = 0; i < Setting.VersionItems.Count; i++)
 				{
-					vData = Tools.Load(vPath, Setting.VersionItems[i].ver, Setting.EncryptionKeyValue);
-					if (vData != null)
+					data = Tools.Load(path, Setting.VersionItems[i].ver, Setting.EncryptionKeyValue);
+					if (data != null)
 					{
-						vJson = System.Text.UTF8Encoding.UTF8.GetString(vData);
-						vResData = Tools.DeserializeObject<rRes[]>(vJson);
-						for (int j = 0; j < vResData.Length; j++)
-							vList.Add(vResData[j]);
+						json = System.Text.UTF8Encoding.UTF8.GetString(data);
+						resData = Tools.DeserializeObject<rRes[]>(json);
+						for (int j = 0; j < resData.Length; j++)
+							list.Add(resData[j]);
 					}
 				}
 			}
-
-			return vList;
+			return list;
 		}
 
 		//建立FTP目錄
-		private static void MakeDir (string vUser, string vPWD, string vPath) 
+		private static void MakeDir(string user, string pwd, string path) 
 		{
-			string vName = Path.GetFileName(vPath);
+			string name = Path.GetFileName(path);
+			path = path.Replace(name, "");
+			if (path.EndsWith("/"))
+				path = path.Remove(path.Length - 1);
 
-			vPath = vPath.Replace(vName, "");
+			string data = path.Replace(GetLocation(Setting.IP), "");
+			string[] strs = data.Split('/');
 
-			if (vPath.EndsWith("/") == true)
-			{
-				vPath = vPath.Remove(vPath.Length - 1);
-			}
-
-			string vData = vPath.Replace(GetLocation(Setting.IP), "");
-			string[] vStrAry = vData.Split('/');
-
-			for (int i = 0; i < vStrAry.Length; i++)
+			for (int i = 0; i < strs.Length; i++)
 			{
 				string zPath = GetLocation(Setting.IP);
-
 				for (int j = 0; j <= i; j++)
-					zPath = zPath + vStrAry[j] + "/";
+					zPath = zPath + strs[j] + "/";
 
-				if (CheckDirExist(vUser, vPWD, zPath) == true)
+				if (CheckDirExist(user, pwd, zPath))
 					continue;
 
-				if (zPath.EndsWith("/") == true)
+				if (zPath.EndsWith("/"))
 					zPath = zPath.Remove(zPath.Length - 1);
 
-				System.Uri vUri = new System.Uri(zPath);
+				System.Uri uri = new System.Uri(zPath);
 				try
 				{
 					// Get the object used to communicate with the server.
-					FtpWebRequest request = (FtpWebRequest)WebRequest.Create(vUri);
+					FtpWebRequest request = (FtpWebRequest)WebRequest.Create(uri);
 					request.Method = WebRequestMethods.Ftp.MakeDirectory;
 					request.Timeout = 60000;
 
 					// This example assumes the FTP site uses anonymous logon.
-					request.Credentials = new NetworkCredential(vUser, vPWD);
+					request.Credentials = new NetworkCredential(user, pwd);
 
 					FtpWebResponse response = (FtpWebResponse)request.GetResponse();
 					response.Close();
@@ -248,38 +240,38 @@ namespace AutoLauncher.AssetBundleTool
 				}
 				catch (WebException e)
 				{
-					Debug.LogError(string.Format("Make Path: {0} Err! WebException: {1}", vPath, e.ToString()));
+					Debug.LogError(string.Format("Make Path: {0} Err! WebException: {1}", path, e.ToString()));
 				}
 			}
 		}
 
 		//上傳檔案到FTP
-		private static void Upload (string vUser, string vPWD, string vPath, byte[] vData)
+		private static void Upload(string user, string pwd, string path, byte[] data)
 		{
-			if (CheckDirExist(vUser, vPWD, vPath) == false)
-				MakeDir(vUser, vPWD, vPath);
+			if (!CheckDirExist(user, pwd, path))
+				MakeDir(user, pwd, path);
 
-			System.Uri vUri = new System.Uri(vPath);
+			System.Uri uri = new System.Uri(path);
 			try
 			{
 				// Get the object used to communicate with the server.
-				FtpWebRequest request = (FtpWebRequest)WebRequest.Create(vUri);
+				FtpWebRequest request = (FtpWebRequest)WebRequest.Create(uri);
 				request.Method = WebRequestMethods.Ftp.UploadFile;
 				request.Timeout = 60000;
 
 				// This example assumes the FTP site uses anonymous logon.
-				request.Credentials = new NetworkCredential(vUser, vPWD);
+				request.Credentials = new NetworkCredential(user, pwd);
 
 				// Copy the contents of the file to the requestrequest stream.
-				request.ContentLength = vData.Length;
+				request.ContentLength = data.Length;
 				Stream requestStream = request.GetRequestStream();
 
-				requestStream.Write(vData, 0, vData.Length);
+				requestStream.Write(data, 0, data.Length);
 				requestStream.Close();
 
 				FtpWebResponse response = (FtpWebResponse)request.GetResponse();
 
-				Debug.Log(string.Format("Upload {0} complete status {1}", vPath, response.StatusDescription));
+				Debug.Log(string.Format("Upload {0} complete status {1}", path, response.StatusDescription));
 
 				response.Close();
 			}
@@ -290,17 +282,17 @@ namespace AutoLauncher.AssetBundleTool
 		}
 
 		//處理上傳資料
-		public static void HandleUpload (string vPath, bool vIsShow = true)
+		public static void HandleUpload(string path, bool isShow = true)
 		{
-			string zPath = Application.dataPath + "/" + vPath.Remove(0, 7);
-			string zUser = Setting.User;
-			string zPWD = Setting.PWD;
-			string zIP = Setting.IP;
-			byte[] zData;
+			string zPath = Application.dataPath + "/" + path.Remove(0, 7);
+			string user = Setting.User;
+			string pwd = Setting.PWD;
+			string ip = Setting.IP;
+			byte[] data;
 
 			if (CheckOutputPath(zPath) == false)
 			{
-				if (vIsShow == true)
+				if (isShow == true)
 					EditorUtility.DisplayDialog("Upload", "Check your path!", "OK");
 				return;
 			}
@@ -309,11 +301,11 @@ namespace AutoLauncher.AssetBundleTool
 			{
 				if (CheckIsFolder(zPath) == true)
 				{
-					string[] vFile = Directory.GetFiles(zPath, "*.*", SearchOption.AllDirectories);
+					string[] files = Directory.GetFiles(zPath, "*.*", SearchOption.AllDirectories);
 
-					for (int i = 0; i < vFile.Length; i++)
+					for (int i = 0; i < files.Length; i++)
 					{
-						zPath = vFile[i].Replace("\\", "/");
+						zPath = files[i].Replace("\\", "/");
 
 						if (Path.GetExtension(zPath) == ".meta")
 							continue;
@@ -321,12 +313,12 @@ namespace AutoLauncher.AssetBundleTool
 						if (Path.GetExtension(zPath) == ".crc")
 							continue;
 
-						EditorUtility.DisplayProgressBar(string.Format("Uploading {0}/{1}", i + 1, vFile.Length), GetDataPath(zPath, Application.dataPath + "/" + Setting.OutputAssetsFolder + "/"), (float)(i + 1 / vFile.Length));
+						EditorUtility.DisplayProgressBar(string.Format("Uploading {0}/{1}", i + 1, files.Length), GetDataPath(zPath, Application.dataPath + "/" + Setting.OutputAssetsFolder + "/"), (float)(i + 1 / files.Length));
 
-						zData = File.ReadAllBytes(zPath);
-						zPath = GetLocation(zIP) + GetDataPath(zPath, Application.dataPath + "/" + Setting.OutputAssetsFolder + "/");
+						data = File.ReadAllBytes(zPath);
+						zPath = GetLocation(ip) + GetDataPath(zPath, Application.dataPath + "/" + Setting.OutputAssetsFolder + "/");
 
-						Upload(zUser, zPWD, zPath, zData);
+						Upload(user, pwd, zPath, data);
 					}
 				}
 				else
@@ -341,10 +333,10 @@ namespace AutoLauncher.AssetBundleTool
 
 					EditorUtility.DisplayProgressBar(string.Format("Uploading {0}/{1}", 1, 1), GetDataPath(zPath, Application.dataPath + "/" + Setting.OutputAssetsFolder + "/"), 0f);
 
-					zData = File.ReadAllBytes(zPath);
-					zPath = GetLocation(zIP) + GetDataPath(zPath, Application.dataPath + "/" + Setting.OutputAssetsFolder + "/");
+					data = File.ReadAllBytes(zPath);
+					zPath = GetLocation(ip) + GetDataPath(zPath, Application.dataPath + "/" + Setting.OutputAssetsFolder + "/");
 
-					Upload(zUser, zPWD, zPath, zData);
+					Upload(user, pwd, zPath, data);
 				}
 			}
 			catch (System.Exception e)
@@ -354,34 +346,34 @@ namespace AutoLauncher.AssetBundleTool
 
 			EditorUtility.ClearProgressBar();
 
-			if (vIsShow == true)
+			if (isShow == true)
 				EditorUtility.DisplayDialog("Upload", "Upload all complete!", "OK");
 		}
 
 		//處理上傳資料
-		public static void HandleUploadEx (eLanguage vLang, bool vIsShow = true)
+		public static void HandleUploadEx(eLanguage lang, bool isShow = true)
 		{
-			string zUser = Setting.User;
-			string zPWD = Setting.PWD;
-			string zIP = Setting.IP;
+			string user = Setting.User;
+			string pwd = Setting.PWD;
+			string ip = Setting.IP;
 
-			List<rRes> vList1 = GetUploadList(vLang);
-			List<rRes> vList2 = GetDownloadList(vLang);
+			List<rRes> list1 = GetUploadList(lang);
+			List<rRes> list2 = GetDownloadList(lang);
 
-			for (int i = 0; i < vList1.Count; i++)
+			for (int i = 0; i < list1.Count; i++)
 			{
-				string zPath = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + vList1[i].Path + vList1[i].FileName;
+				string zPath = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + list1[i].Path + list1[i].FileName;
 
-				if (CheckNeedUpload(vList1[i], vList2) == false)
+				if (CheckNeedUpload(list1[i], list2) == false)
 					continue;
 
-				byte[] zData = File.ReadAllBytes(zPath);
+				byte[] data = File.ReadAllBytes(zPath);
 
-				zPath = GetLocation(zIP) + GetDataPath(zPath, Application.dataPath + "/" + Setting.OutputAssetsFolder + "/");
+				zPath = GetLocation(ip) + GetDataPath(zPath, Application.dataPath + "/" + Setting.OutputAssetsFolder + "/");
 
 				try
 				{
-					Upload(zUser, zPWD, zPath, zData);
+					Upload(user, pwd, zPath, data);
 				}
 				catch (System.Exception e)
 				{
@@ -390,9 +382,9 @@ namespace AutoLauncher.AssetBundleTool
 				}
 			}
 
-			HandleUpload(string.Format("Assets/{0}/{1}", Setting.OutputAssetsFolder, GetLangPath(vLang, true) + "Versions/"), false);
+			HandleUpload(string.Format("Assets/{0}/{1}", Setting.OutputAssetsFolder, GetLangPath(lang, true) + "Versions/"), false);
 
-			if (vIsShow == true)
+			if (isShow)
 				EditorUtility.DisplayDialog("Upload", "Upload all complete!", "OK");
 		}
 	}

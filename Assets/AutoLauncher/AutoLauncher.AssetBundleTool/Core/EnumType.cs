@@ -1,10 +1,5 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using System.Collections;
-using System;
-using Object = UnityEngine.Object;
-
-namespace AutoLauncher.AssetBundleTool
+namespace AutoLauncher.Enum
 {
 	public enum eLanguage
 	{

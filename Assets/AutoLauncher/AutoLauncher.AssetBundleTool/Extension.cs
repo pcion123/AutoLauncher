@@ -1,152 +1,143 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
-using System.Collections;
-using System;
-using System.IO;
-using Tools = AutoLauncher.Utility.Tools;
-
 namespace AutoLauncher.AssetBundleTool
 {
+	using UnityEngine;
+	using UnityEditor;
+	using System.Collections;
+	using System;
+	using System.IO;
+	using AutoLauncher.Enum;
+	using Tools = AutoLauncher.Utility.Tools;
+
 	public static class Extension : object
 	{
 		//取得語系路徑
-		private static string GetLangPath (eLanguage vLang, bool vIsSlash = false)
+		private static string GetLangPath(eLanguage lang, bool isSlash = false)
 		{
-			return vIsSlash ? vLang.ToString() + "/" : vLang.ToString();
+			return isSlash ? lang.ToString() + "/" : lang.ToString();
 		}
 
 		//取得資料路徑
-		private static string GetDataPath (string vPath, string vReplace)
+		private static string GetDataPath(string path, string replace)
 		{
-			string vDataPath = vPath.Replace(vReplace, "");
-			string vFileName = Path.GetFileName(vPath);
-			string vExtension = Path.GetExtension(vPath);
-			if (vExtension != "")
+			string dataPath = path.Replace(replace, "");
+			string fileName = Path.GetFileName(path);
+			string extension = Path.GetExtension(path);
+			if (extension != "")
 			{
-				string vFolder = vFileName.Replace(vExtension, "") + "/";
-				vDataPath = vDataPath.Replace(vFolder + vFileName, "");
+				string folder = fileName.Replace(extension, "") + "/";
+				dataPath = dataPath.Replace(folder + fileName, "");
 			}
 			else
 			{
-				vDataPath = vDataPath + "/";
+				dataPath = dataPath + "/";
 			}
-			return vDataPath;
+			return dataPath;
 		}
 
 		//複製檔案
-		private static void CopyFile (string aFileName, string aSourcePath, string aTargetPath)
+		private static void CopyFile(string fileName, string sourcePath, string targetPath)
 		{
 			// Use Path class to manipulate file and directory paths.
-			string sourceFile = System.IO.Path.Combine(aSourcePath, aFileName);
-			string destFile = System.IO.Path.Combine(aTargetPath, aFileName);
+			string sourceFile = Path.Combine(sourcePath, fileName);
+			string destFile = Path.Combine(targetPath, fileName);
 
 			// To copy a folder's contents to a new location:
 			// Create a new target folder, if necessary.
-			if (!System.IO.Directory.Exists(aTargetPath))
-			{
-				System.IO.Directory.CreateDirectory(aTargetPath);
-			}
+			if (!Directory.Exists(targetPath))
+				Directory.CreateDirectory(targetPath);
 
-			if (!System.IO.File.Exists(aSourcePath + aFileName))
-			{
+			if (!File.Exists(sourcePath + fileName))
 				return;
-			}
 
 			// To copy a file to another location and 
 			// overwrite the destination file if it already exists.
-			System.IO.File.Copy(sourceFile, destFile, true);
+			File.Copy(sourceFile, destFile, true);
 		}
 
 		//移動檔案
-		private static void MoveFile (string aFileName, string aSourcePath, string aTargetPath)
+		private static void MoveFile(string fileName, string sourcePath, string targetPath)
 		{
 			// Use Path class to manipulate file and directory paths.
-			string sourceFile = System.IO.Path.Combine(aSourcePath, aFileName);
-			string destFile = System.IO.Path.Combine(aTargetPath, aFileName);
+			string sourceFile = Path.Combine(sourcePath, fileName);
+			string destFile = Path.Combine(targetPath, fileName);
 
 			// To copy a folder's contents to a new location:
 			// Create a new target folder, if necessary.
-			if (!System.IO.Directory.Exists(aTargetPath))
-			{
-				System.IO.Directory.CreateDirectory(aTargetPath);
-			}
+			if (!Directory.Exists(targetPath))
+				Directory.CreateDirectory(targetPath);
 
-			if (!System.IO.File.Exists(aSourcePath + aFileName))
-			{
+			if (!File.Exists(sourcePath + fileName))
 				return;
-			}
 
 			// To copy a file to another location and 
 			// overwrite the destination file if it already exists.
-			System.IO.File.Copy(sourceFile, destFile, true);
+			File.Copy(sourceFile, destFile, true);
 
-			System.IO.File.Delete(aSourcePath + aFileName);
+			File.Delete(sourcePath + fileName);
 		}
 
 		//處理最小包
-		public static void HandleOutputAssets (eLanguage vLang, bool vIsShow = true)
+		public static void HandleOutputAssets(eLanguage lang, bool isShow = true)
 		{
 			for (int i = 0; i < Setting.OutputCount; i++)
 			{
-				string[] vFile = Directory.GetFiles(Application.dataPath + "/" + Setting.InputAssetsFolder + "/" + GetLangPath(vLang), Setting.OutputItems[i].value, SearchOption.AllDirectories);
-
-				for (int j = 0; j < vFile.Length; j++)
+				string[] files = Directory.GetFiles(Application.dataPath + "/" + Setting.InputAssetsFolder + "/" + GetLangPath(lang), Setting.OutputItems[i].value, SearchOption.AllDirectories);
+				for (int j = 0; j < files.Length; j++)
 				{
-					string vPath = vFile[j].Replace("\\", "/");
-					string vName = Path.GetFileName(vPath);
-					string vExtension = Path.GetExtension(vPath);
+					string path = files[j].Replace("\\", "/");
+					string name = Path.GetFileName(path);
+					string extension = Path.GetExtension(path);
 
-					if (vExtension == ".meta")
+					if (extension == ".meta")
 						continue;
 
-					string vSourcePath = Application.dataPath + "/" + Setting.InputAssetsFolder + "/" + GetDataPath(Path.GetDirectoryName(vPath), Application.dataPath + "/" + Setting.InputAssetsFolder + "/");
-					string vDestPath = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + GetDataPath(Path.GetDirectoryName(vPath), Application.dataPath + "/" + Setting.InputAssetsFolder + "/");
+					string sourcePath = Application.dataPath + "/" + Setting.InputAssetsFolder + "/" + GetDataPath(Path.GetDirectoryName(path), Application.dataPath + "/" + Setting.InputAssetsFolder + "/");
+					string destPath = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + GetDataPath(Path.GetDirectoryName(path), Application.dataPath + "/" + Setting.InputAssetsFolder + "/");
 
-					if (vExtension != ".txt")
+					if (extension != ".txt")
 					{
-						CopyFile(vName, vSourcePath, vDestPath);
+						CopyFile(name, sourcePath, destPath);
 					}
 					else
 					{
 						//讀取資料
-						byte[] vData = Tools.Load(GetDataPath(vSourcePath, vName), vName);
+						byte[] data = Tools.Load(GetDataPath(sourcePath, name), name);
 
 						//加密存檔
-						Tools.Save(GetDataPath(vDestPath, vName), vName, vData, Setting.EncryptionKeyValue);
+						Tools.Save(GetDataPath(destPath, name), name, data, Setting.EncryptionKeyValue);
 					}
 				}
 			}
 
-			if (vIsShow == true)
+			if (isShow)
 				EditorUtility.DisplayDialog("Copy", "Copy complete!", "OK");
 
 			AssetDatabase.Refresh();
 		}
 
 		//處理最小包
-		public static void HandleStreamingAssets (eLanguage vLang, bool vIsShow = true)
+		public static void HandleStreamingAssets(eLanguage lang, bool isShow = true)
 		{
 			for (int i = 0; i < Setting.StreamingCount; i++)
 			{
-				string[] vFile = Directory.GetFiles(Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + GetLangPath(vLang), Setting.StreamingItems[i].value, SearchOption.AllDirectories);
+				string[] files = Directory.GetFiles(Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + GetLangPath(lang), Setting.StreamingItems[i].value, SearchOption.AllDirectories);
+				for (int j = 0; j < files.Length; j++) {
+					string path = files[j].Replace("\\", "/");
+					string name = Path.GetFileName(path);
+					string extension = Path.GetExtension(path);
 
-				for (int j = 0; j < vFile.Length; j++) {
-					string vPath = vFile[j].Replace("\\", "/");
-					string vName = Path.GetFileName(vPath);
-					string vExtension = Path.GetExtension(vPath);
-
-					if (vExtension == ".meta")
+					if (extension == ".meta")
 						continue;
 
-					string vSourcePath = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + GetDataPath(Path.GetDirectoryName(vPath), Application.dataPath + "/" + Setting.OutputAssetsFolder + "/");
-					string vDestPath = Application.streamingAssetsPath + "/" + GetDataPath(Path.GetDirectoryName(vPath), Application.dataPath + "/" + Setting.OutputAssetsFolder + "/");
+					string sourcePath = Application.dataPath + "/" + Setting.OutputAssetsFolder + "/" + GetDataPath(Path.GetDirectoryName(path), Application.dataPath + "/" + Setting.OutputAssetsFolder + "/");
+					string destPath = Application.streamingAssetsPath + "/" + GetDataPath(Path.GetDirectoryName(path), Application.dataPath + "/" + Setting.OutputAssetsFolder + "/");
 
-					MoveFile(vName, vSourcePath, vDestPath);
+					MoveFile(name, sourcePath, destPath);
 				}
 			}
 
-			if (vIsShow == true)
+			if (isShow)
 				EditorUtility.DisplayDialog("Move", "Move complete!", "OK");
 
 			AssetDatabase.Refresh();

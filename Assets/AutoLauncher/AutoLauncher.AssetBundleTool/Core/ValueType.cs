@@ -1,11 +1,11 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using System.Collections;
-using System;
-using Object = UnityEngine.Object;
-
 namespace AutoLauncher.AssetBundleTool
 {
+	using UnityEngine;
+	using System;
+	using AutoLauncher.Enum;
+	using Object = UnityEngine.Object;
+
 	[Serializable]
 	public class DragValue
 	{
